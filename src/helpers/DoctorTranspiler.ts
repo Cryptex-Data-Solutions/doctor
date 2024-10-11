@@ -1,4 +1,5 @@
-import { CheerioAPI, load, Element } from "cheerio";
+import { CheerioAPI, load } from "cheerio";
+import type { Element } from "domhandler";
 import * as matter from "gray-matter";
 import * as MarkdownIt from "markdown-it";
 import {
@@ -101,7 +102,6 @@ export class DoctorTranspiler {
 
         const $ = load(htmlMarkup, {
           xmlMode: true,
-          decodeEntities: false,
         });
         const imgElms = $(`img`).toArray();
         const anchorElms = $(`a`).toArray();

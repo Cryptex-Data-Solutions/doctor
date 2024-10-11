@@ -90,7 +90,6 @@ export class ShortcodesHelpers {
 
     const $ = cheerio.load(htmlMarkup, {
       xmlMode: true,
-      decodeEntities: false,
     });
 
     for (const tag of tags) {
