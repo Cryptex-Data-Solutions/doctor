@@ -6,6 +6,13 @@
     }]
   },
   {
+    "title": "1.12.1",
+    "updates": [{
+      "id": 164,
+      "title": "Fix dependencies"
+    }]
+  },
+  {
     "title": "1.12.0",
     "updates": [{
         "id": null,
