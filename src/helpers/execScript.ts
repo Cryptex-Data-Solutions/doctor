@@ -80,7 +80,7 @@ const promiseExecScript = async <T>(args: string[] = [], shouldSpawn: boolean = 
 
         resolve(stdout as any as T);
       } catch (e) {
-        reject(e.message);
+        reject((e as Error).message);
       }
     }
   });

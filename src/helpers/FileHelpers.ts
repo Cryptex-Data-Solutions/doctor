@@ -88,7 +88,7 @@ export class FileHelpers {
           }
         }
       } catch (e) {
-        throw e.message;
+        throw (e as Error).message;
       }
     }
   }

@@ -29,10 +29,10 @@ export class DoctorTranspiler {
             await this.processFile(file, observer, options, output);
           } catch (e) {
             observer.error(e);
-            Logger.debug(e.message);
+            Logger.debug((e as Error).message);
 
             if (!options.continueOnError) {
-              throw e.message;
+              throw (e as Error).message;
             }
           }
         }
@@ -105,7 +105,7 @@ export class DoctorTranspiler {
           try {
             markup.content = this.processLinks($, anchorElms, file, markup.content, options);
           } catch (e) {
-            throw e.message;
+            throw (e as Error).message;
           }
         }
 
@@ -209,7 +209,7 @@ export class DoctorTranspiler {
         contents = contents.replace(new RegExp(imgSource, 'g'), imgUrl);
         StatusHelper.addImage();
       } catch (e) {
-        return Promise.reject(new Error(`Something failed while uploading the image asset. ${e.message}`));
+        return Promise.reject(new Error(`Something failed while uploading the image asset. ${(e as Error).message}`));
       }
     }
 

@@ -38,10 +38,10 @@ export class PagesHelper {
             }
           } catch (e) {
             observer.error(e);
-            Logger.debug(e.message);
+            Logger.debug((e as Error).message);
 
             if (!options.continueOnError) {
-              throw e.message;
+              throw (e as Error).message;
             }
           }
         }

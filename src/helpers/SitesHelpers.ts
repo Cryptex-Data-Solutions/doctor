@@ -88,7 +88,7 @@ export class SiteHelpers {
         
         await execScript(ArgumentsHelper.parse(`spo site set --url "${webUrl}" --siteLogoUrl "${imgUrl}"`), CliCommand.getRetry());
       } catch (e) {
-        return Promise.reject(new Error(`Something failed while setting the site logo. ${e.message}`));
+        return Promise.reject(new Error(`Something failed while setting the site logo. ${(e as Error).message}`));
       }
     }
   }

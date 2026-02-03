@@ -33,8 +33,8 @@ export class ApiHelper {
 
       return null;
     } catch (err) {
-      Logger.debug(err.message);
-      throw err.message;
+      Logger.debug((err as Error).message);
+      throw (err as Error).message;
     }
   }
 
@@ -70,8 +70,8 @@ export class ApiHelper {
 
       return null;
     } catch (err) {
-      Logger.debug(err.message);
-      throw err.message;
+      Logger.debug((err as Error).message);
+      throw (err as Error).message;
     }
   }
 
@@ -105,8 +105,8 @@ export class ApiHelper {
       
       return false;
     } catch (err) {
-      Logger.debug(err.message);
-      throw err.message;
+      Logger.debug((err as Error).message);
+      throw (err as Error).message;
     }
   }
 }
