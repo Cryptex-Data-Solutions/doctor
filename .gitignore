@@ -5,6 +5,7 @@ todo.md
 .DS_Store
 screenshots
 mochawesome-report
+.vscode/
 
 *.pem
 *.pfx
