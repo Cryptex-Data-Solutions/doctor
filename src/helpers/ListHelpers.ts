@@ -17,7 +17,7 @@ export class ListHelpers {
       if (listData && typeof listData === "string") {
         listData = JSON.parse(listData);
       }
-      this.pageList = (listData as ListData[]).find(l => l.Url.toLowerCase().includes("/sitepages"));
+      this.pageList = (listData as ListData[]).find(l => (l.RootFolder?.ServerRelativeUrl || l.Url || "").toLowerCase().includes("/sitepages"));
     }
     return this.pageList;
   }

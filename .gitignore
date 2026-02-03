@@ -10,6 +10,8 @@ mochawesome-report
 *.pem
 *.pfx
 cypress.json
+cypress.env.json
+test-sample/
 cypress/screenshots
 cypress/videos
 cypress/results

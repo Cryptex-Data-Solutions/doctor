@@ -170,8 +170,10 @@ export class PagesHelper {
       // Web part needs to be updated
       await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --pageName "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
     } else {
-      // Add new markdown web part
-      await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData}`), CliCommand.getRetry());
+      // Ensure a section exists before adding the web part (required by CLI v11+)
+      await execScript(ArgumentsHelper.parse(`spo page section add --webUrl "${webUrl}" --pageName "${slug}" --sectionTemplate OneColumn`), CliCommand.getRetry());
+      // Add new markdown web part to the newly created section
+      await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData} --section 1 --column 1`), CliCommand.getRetry());
     }
   }
 
