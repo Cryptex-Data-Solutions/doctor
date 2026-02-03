@@ -34,7 +34,7 @@ export class PagesHelper {
               observer.next(`Cleaning up page: ${slug}`);
               const filePath = `sitepages/${slug}`;
               const relUrl = FileHelpers.getRelUrl(webUrl, filePath);
-              await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${relUrl}" --confirm`), CliCommand.getRetry());
+              await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${relUrl}" --force`), CliCommand.getRetry());
             }
           } catch (e) {
             observer.error(e);
@@ -168,7 +168,7 @@ export class PagesHelper {
     
     if (wpId) {
       // Web part needs to be updated
-      await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --name "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
+      await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --pageName "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
     } else {
       // Add new markdown web part
       await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData}`), CliCommand.getRetry());

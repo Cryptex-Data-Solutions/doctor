@@ -2,7 +2,7 @@ import { CliCommand } from './CliCommand';
 import * as CleanCSS from 'clean-css';
 import * as fg from 'fast-glob';
 import md = require('markdown-it');
-import hljs = require('highlight.js');
+import hljs from 'highlight.js';
 import { MarkdownSettings } from '../models';
 import { ShortcodesHelpers } from './ShortcodesHelpers';
 import { encode } from 'html-entities';
@@ -39,7 +39,7 @@ export class MarkdownHelper {
     const converter = md({ html: true, breaks: true, highlight: (str, lang) => {
       if (lang && hljs.getLanguage(lang)) {
         try {
-          return `<pre class="hljs ${lang.toLowerCase().replace(/ /g, '_')}"><code>${hljs.highlight(lang, str, true).value}</code></pre>`;
+          return `<pre class="hljs ${lang.toLowerCase().replace(/ /g, '_')}"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`;
         } catch (__) {}
       }
 

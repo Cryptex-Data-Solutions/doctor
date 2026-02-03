@@ -48,7 +48,7 @@ export class TempDataHelper {
       const crntFolder = process.cwd();
       const tempPath = path.join(crntFolder, "./temp");
       if (fs.existsSync(tempPath)) {
-        fs.rmdirSync(tempPath, { recursive: true });
+        fs.rmSync(tempPath, { recursive: true, force: true });
       }
 
       const uniformalStartFolder = crntFolder.replace(/\\/g, '/');

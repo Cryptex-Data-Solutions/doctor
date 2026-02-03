@@ -34,7 +34,7 @@ export class SiteHelpers {
     }
 
     if (siteDesign.chrome) {
-      let cmdChrome = `spo site chrome set --url "${webUrl}"`;
+      let cmdChrome = `spo site chrome set --siteUrl "${webUrl}"`;
 
       if (siteDesign.chrome.disableFooter) {
         cmdChrome = `${cmdChrome} --disableFooter`;

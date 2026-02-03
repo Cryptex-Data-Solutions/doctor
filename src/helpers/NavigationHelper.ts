@@ -204,7 +204,7 @@ export class NavigationHelper {
    */
   private static async removeNavigationElm(webUrl: string, type: LocationType, id: number) {
     if (id) {
-      await execScript(ArgumentsHelper.parse(`spo navigation node remove --webUrl "${webUrl}" --location "${type}" --id "${id}" --confirm`), CliCommand.getRetry());
+      await execScript(ArgumentsHelper.parse(`spo navigation node remove --webUrl "${webUrl}" --location "${type}" --id "${id}" --force`), CliCommand.getRetry());
     }
   }
 
