@@ -1,19 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const config = path.join(__dirname, `../cypress.sample.json`);
-const newPath = path.join(__dirname, `../cypress.json`);
+const envPath = path.join(__dirname, `../cypress.env.json`);
 
-if (fs.existsSync(config)) {
-  const content = fs.readFileSync(config, { encoding: "utf-8" });
-  if (content) {
-    const configJson = JSON.parse(content);
-    configJson.baseUrl = process.env.SITEURL;
-    configJson.env = {};
-    configJson.env.USERNAME = process.env.USERNAME;
-    configJson.env.PASSWORD = process.env.PASSWORD;
-    configJson.env.SITEURL = process.env.SITEURL;
-    configJson.screenshotsFolder = `cypress/screenshots/${process.env.ENVIRONMENT}`;
-    fs.writeFileSync(newPath, JSON.stringify(configJson), { encoding: "utf-8" });
-  }
-}
+const envConfig = {
+  USERNAME: process.env.USERNAME,
+  PASSWORD: process.env.PASSWORD,
+  SITEURL: process.env.SITEURL,
+};
+
+fs.writeFileSync(envPath, JSON.stringify(envConfig, null, 2), { encoding: "utf-8" });
