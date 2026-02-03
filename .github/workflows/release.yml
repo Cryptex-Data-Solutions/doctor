@@ -23,31 +23,31 @@ jobs:
     strategy:
       matrix:
         include:
-          - node: 14
+          - node: 22
             os: macos-latest
             siteUrl: SITEURL_MACOS
-          - node: 14
+          - node: 22
             os: ubuntu-latest
             siteUrl: SITEURL_LINUX
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node }}
         registry-url: https://registry.npmjs.org/
 
     - name: Cache node modules
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         # npm cache files are stored in `~/.npm` on Linux/macOS
         path: ~/.npm
         key: ${{ matrix.os }}-release-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ matrix.os }}-release-
-  
+
     - run: npm ci
-      
+
     - run: npm start
 
     - run: npm link
@@ -60,7 +60,7 @@ jobs:
         else
           git clone https://github.com/estruyf/doctor-sample
         fi
-        
+
         node ./scripts/prepare-sample.js
         cd doctor-sample
 
@@ -69,7 +69,7 @@ jobs:
         if [[ ${GITHUB_REF} == "refs/heads/main" || ${GITHUB_EVENT_NAME} == 'workflow_dispatch' ]]; then
           startClean="--cleanStart"
         fi
-        
+
         skipPages=""
         # Check on which branch it is running
         if [[ ${GITHUB_EVENT_NAME} == "schedule" ]]; then
@@ -91,27 +91,27 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '#docs') }}
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
+        node-version: 22
         registry-url: https://registry.npmjs.org/
-    
+
     - name: Get npm cache directory
       id: npm-cache
       run: |
-        echo "::set-output name=dir::$(npm config get cache)"
+        echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: ${{ steps.npm-cache.outputs.dir }}
         key: ${{ runner.os }}-release-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-release-
-  
+
     - run: npm ci
       shell: powershell
-      
+
     - run: npm start
       shell: powershell
 
@@ -119,13 +119,13 @@ jobs:
       shell: powershell
 
     - name: Publish via Doctor
-      run: | 
+      run: |
         if (${env:GITHUB_REF} -ne 'refs/heads/main') {
           git clone -b dev https://github.com/estruyf/doctor-sample
         } else {
           git clone https://github.com/estruyf/doctor-sample
         }
-        
+
         node ./scripts/prepare-sample.js
         cd doctor-sample
 
@@ -133,7 +133,7 @@ jobs:
         if (${env:GITHUB_REF} -eq 'refs/heads/main' -or ${env:GITHUB_EVENT_NAME} -eq 'workflow_dispatch') {
           $startClean = "--cleanStart"
         }
-        
+
         $skipPages=""
         # Check on which branch it is running
         if (${env:GITHUB_EVENT_NAME} -eq 'schedule') {
@@ -156,27 +156,27 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '#docs') }}
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
+        node-version: 22
         registry-url: https://registry.npmjs.org/
-    
+
     - name: Get npm cache directory
       id: npm-cache
       run: |
-        echo "::set-output name=dir::$(npm config get cache)"
+        echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: ${{ steps.npm-cache.outputs.dir }}
         key: ${{ runner.os }}-release-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-release-
-  
+
     - run: npm ci
       shell: cmd
-      
+
     - run: npm start
       shell: cmd
 
@@ -186,7 +186,7 @@ jobs:
     - name: Publish via Doctor
       run: |
         IF not "%GITHUB_REF%"=="refs/heads/main" (git clone -b dev https://github.com/estruyf/doctor-sample) else (git clone https://github.com/estruyf/doctor-sample)
-        
+
 
         node ./scripts/prepare-sample.js
         cd doctor-sample
@@ -235,31 +235,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - node: 14
+          - node: 22
             testTitle: macOS
             siteUrl: SITEURL_MACOS
             browser: chrome
-          - node: 14
+          - node: 22
             testTitle: Linux
             siteUrl: SITEURL_LINUX
             browser: firefox
-          - node: 14
+          - node: 22
             testTitle: Windows PowerShell
             siteUrl: SITEURL_WINDOWS_POWERSHELL
             browser: chrome
-          - node: 14
+          - node: 22
             testTitle: Windows
             siteUrl: SITEURL_WINDOWS
             browser: firefox
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
+        node-version: 22
         registry-url: https://registry.npmjs.org/
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: ~/.npm
         key: ${{ runner.os }}-release-${{ hashFiles('**/package-lock.json') }}
@@ -268,7 +268,7 @@ jobs:
 
     - run: |
         npm ci
-        
+
     - name: Preparing the Cypress config
       run: |
         node ./scripts/prepare-e2e.js
@@ -277,21 +277,21 @@ jobs:
         PASSWORD: ${{ secrets.PASSWORD }}
         SITEURL: ${{ secrets[matrix.siteUrl] }}
         ENVIRONMENT: ${{ matrix.siteUrl }}
-    
+
     - name: Cypress E2E testing
       run: |
         ./node_modules/.bin/cypress verify
         ./node_modules/.bin/cypress run --browser ${{ matrix.browser }}
-    
+
     - name: Upload screenshots
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }} # To make sure we can see what went wrong
       with:
         name: screenshots-${{ matrix.testTitle }}
         path: ./**/screenshots/**/*.png
 
     - name: Upload videos
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }} # To make sure we can see what went wrong
       with:
         name: videos-${{ matrix.testTitle }}
@@ -311,7 +311,7 @@ jobs:
         ENVTYPE: ${{ matrix.siteUrl }}
 
     - name: Upload reports
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }} # To make sure we can see what went wrong
       with:
         name: reports-${{ matrix.testTitle }}
@@ -329,28 +329,28 @@ jobs:
     needs: [e2e_testing]
 
     steps:
-      - uses: actions/checkout@v2
-      
+      - uses: actions/checkout@v4
+
       - name: Download Linux report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: reports-Linux
           path: reports
 
       - name: Download Windows report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: reports-Windows
           path: reports
 
       - name: Download Windows PowerShell report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: "reports-Windows PowerShell"
           path: reports
 
       - name: Download macOS report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: reports-macOS
           path: reports
@@ -358,7 +358,7 @@ jobs:
       - name: Check directory
         run: |
           ls ./reports -R
-      
+
       - name: Publish reports
         uses: JamesIves/github-pages-deploy-action@4.1.0
         with:
@@ -379,14 +379,14 @@ jobs:
 
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
+        node-version: 22
         registry-url: https://registry.npmjs.org/
-  
+
     - run: npm ci
-      
+
     - run: npm start
 
     - name: Publish release
@@ -394,11 +394,11 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       env:
         NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-        
+
     - name: Update the package version
       if: github.ref == 'refs/heads/dev'
       run: node scripts/update-package-version.js $GITHUB_RUN_ID
-        
+
     - name: Publish beta release
       run: npm publish --tag next --access public
       if: github.ref == 'refs/heads/dev'
