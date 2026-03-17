@@ -44,6 +44,14 @@ export async function cli(args: string[]) {
           )
       );
       console.log("");
+      console.log(
+        kleur
+          .blue()
+          .italic(
+            "Maintained by Dmitriy Van der Elst - https://www.linkedin.com/in/dmitriy-van-der-elst/ - @dmitriyvde"
+          )
+      );
+      console.log("");
     } else {
       await Commands.start(options);
       await TempDataHelper.clear();

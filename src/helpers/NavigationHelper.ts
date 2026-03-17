@@ -11,9 +11,12 @@ export class NavigationHelper {
   private static tnElms: NavigationItem[] | string = null;
 
   /**
-   * Update the navigation on the site
-   * @param webUrl
-   * @param navigation
+    * Synchronizes site navigation with the provided menu definition.
+    * Optionally cleans existing quick launch and/or top navigation nodes first,
+    * then recreates items in weighted/alphabetical order.
+    * @param webUrl The SharePoint site URL where navigation should be updated.
+    * @param navigation The navigation model to apply.
+    * @returns A promise that resolves when all configured navigation updates are complete.
    */
   public static async update(webUrl: string, navigation: Menu) {
     if (!navigation) {
@@ -90,11 +93,14 @@ export class NavigationHelper {
   }
 
   /**
-   * Generate the navigation hierarchy
-   * @param navigation
-   * @param menu
-   * @param slug
-   * @param title
+    * Builds a navigation hierarchy by merging a page menu entry into an existing
+    * navigation structure for each supported location.
+    * @param webUrl The SharePoint site URL used to generate page links.
+    * @param navigation The current navigation structure.
+    * @param menu The menu definition for the page being processed.
+    * @param slug The page slug used to build the destination URL.
+    * @param title The fallback display title when a menu item name is not defined.
+    * @returns A new navigation structure containing the merged hierarchy.
    */
   public static hierarchy(
     webUrl: string,
@@ -137,9 +143,10 @@ export class NavigationHelper {
   }
 
   /**
-   * Cleans up the specified navigation
-   * @param webUrl
-   * @param location
+    * Removes all existing nodes from a specific navigation location.
+    * @param webUrl The SharePoint site URL.
+    * @param location The navigation location to clean.
+    * @returns A promise that resolves when cleanup for the location is finished.
    */
   private static async startNavigationCleanup(
     webUrl: string,
@@ -158,8 +165,14 @@ export class NavigationHelper {
   }
 
   /**
-   * Create the navigaiton items recursively
-   * @param items
+    * Creates or updates a menu item in the hierarchy and ensures its parent chain
+    * exists before insertion.
+    * @param webUrl The SharePoint site URL used to build the page URL.
+    * @param items The current list of root menu items to mutate.
+    * @param item The menu item definition to insert or update.
+    * @param slug The page slug used to construct the menu item URL.
+    * @param title The fallback display title when no item name is provided.
+    * @returns The updated root menu items array.
    */
   private static createNavigationHierarchy(
     webUrl: string,
@@ -232,9 +245,11 @@ export class NavigationHelper {
   }
 
   /**
-   * Get the navigation items
-   * @param webUrl
-   * @param type
+    * Retrieves navigation nodes for the requested location and caches the result
+    * for reuse during the current run.
+    * @param webUrl The SharePoint site URL.
+    * @param type The navigation location to query.
+    * @returns A promise that resolves to the list of navigation nodes, or null for unsupported locations.
    */
   private static async getNavigationElms(webUrl: string, type: LocationType) {
     if (type === "QuickLaunch") {
@@ -278,9 +293,11 @@ export class NavigationHelper {
   }
 
   /**
-   * Removes a navigation node
-   * @param webUrl
-   * @param id
+    * Removes a single navigation node by id.
+    * @param webUrl The SharePoint site URL.
+    * @param type The navigation location that contains the node.
+    * @param id The node id to remove.
+    * @returns A promise that resolves when the node removal command completes.
    */
   private static async removeNavigationElm(
     webUrl: string,
@@ -302,11 +319,13 @@ export class NavigationHelper {
   }
 
   /**
-   * Create the navigation elements
-   * @param webUrl
-   * @param type
-   * @param name
-   * @param url
+    * Creates a navigation node at the root level or as a child of an existing node.
+    * @param webUrl The SharePoint site URL.
+    * @param type The navigation location used when creating a root node.
+    * @param name The node title.
+    * @param url The target URL for the node.
+    * @param id Optional parent node id. When set, the node is created as a child.
+    * @returns A promise that resolves to the created navigation node, or null/undefined when no name is provided.
    */
   private static async createNavigationElm(
     webUrl: string,
@@ -341,11 +360,14 @@ export class NavigationHelper {
   }
 
   /**
-   * Create the sub-navigation elements
-   * @param webUrl
-   * @param type
-   * @param Id
-   * @param items
+    * Recursively creates child navigation nodes under a root node.
+    * For Quick Launch, recursion is limited to two levels to match SharePoint constraints.
+    * @param webUrl The SharePoint site URL.
+    * @param type The navigation location.
+    * @param rootId The parent navigation node id under which children are created.
+    * @param items The child menu items to create.
+    * @param level The current recursion depth.
+    * @returns A promise that resolves when all eligible child nodes are created.
    */
   private static async createSubNavigationItems(
     webUrl: string,
@@ -391,18 +413,21 @@ export class NavigationHelper {
   }
 
   /**
-   * Sort the navigation items by their weight
-   * @param a
-   * @param b
+    * Compares menu items by weight for ascending sort order.
+    * Items without weight are sorted last by using a high fallback value.
+    * @param a The first menu item.
+    * @param b The second menu item.
+    * @returns 1 when item a should come after b; otherwise -1.
    */
   private static itemWeightSorting(a: MenuItem, b: MenuItem) {
     return (a.weight || WEIGHT_VALUE) > (b.weight || WEIGHT_VALUE) ? 1 : -1;
   }
 
   /**
-   * Sort the navigation items alphabetically
-   * @param a
-   * @param b
+    * Compares menu items alphabetically by name (or id fallback), case-insensitive.
+    * @param a The first menu item.
+    * @param b The second menu item.
+    * @returns -1 when a comes first, 1 when b comes first, or 0 when equal.
    */
   private static alphabeticalSorting(a: MenuItem, b: MenuItem) {
     if ((a.name || a.id).toLowerCase() < (b.name || b.id).toLowerCase()) {
