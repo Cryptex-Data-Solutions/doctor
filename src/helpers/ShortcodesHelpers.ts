@@ -1,4 +1,5 @@
 import { join } from "path";
+import { pathToFileURL } from "url";
 import fg from "fast-glob";
 import * as cheerio from "cheerio";
 import {
@@ -22,6 +23,8 @@ export class ShortcodesHelpers {
    * @param shortcodes
    */
   public static async init(shortcodes: string = "./shortcodes") {
+    // console.log(`Initializing shortcodes from folder: ${shortcodes}`);
+
     let files: string[] = [];
     if (await existsAsync(shortcodes)) {
       files = await fg(`${shortcodes}/**/*.js`.replace(/\\/g, "/"));
@@ -32,7 +35,9 @@ export class ShortcodesHelpers {
     // Load all the custom shortcodes
     if (files && files.length > 0) {
       for (const file of files) {
-        const sc = await require(join(process.cwd(), file));
+        const filePath = join(process.cwd(), file);
+        const loadedModule = await import(pathToFileURL(filePath).href);
+        const sc = loadedModule.default ?? loadedModule;
         if (sc && sc.name && sc.render) {
           ShortcodesHelpers.shortcodes[sc.name] = {
             render: sc.render,

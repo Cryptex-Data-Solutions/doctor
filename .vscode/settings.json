@@ -2,20 +2,5 @@
   "exportall.config.folderListener": [
     "/src/utils"
   ],
-  "biome.enabled": false,
-  "chat.tools.terminal.autoApprove": {
-    "/^node -e \"const pkg = require\\('\\./node_modules/fast-glob/package\\.json'\\); console\\.log\\(JSON\\.stringify\\(\\{type:pkg\\.type, main:pkg\\.main, exports:pkg\\.exports\\}, null, 2\\)\\)\" 2>&1 \\| head -30$/": {
-      "approve": true,
-      "matchCommandLine": true
-    },
-    "/^for pkg in fast-glob gray-matter arg clean-css markdown-it; do echo \"=== \\$pkg ===\"; node -e \"const p = require\\('\\./node_modules/\\$pkg/package\\.json'\\); console\\.log\\(JSON\\.stringify\\(\\{type:p\\.type, main:p\\.main\\}, null, 0\\)\\)\"; done$/": {
-      "approve": true,
-      "matchCommandLine": true
-    },
-    "/^node -e \"const p = require\\('/Users/dmitriy/repos/doctor/node_modules/@pnp/cli-microsoft365/package\\.json'\\); console\\.log\\('type:', p\\.type, 'main:', p\\.main\\)\"$/": {
-      "approve": true,
-      "matchCommandLine": true
-    },
-    "apply_patch": true
-  }
+  "biome.enabled": false
 }

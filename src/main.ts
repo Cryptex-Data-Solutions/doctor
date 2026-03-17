@@ -41,6 +41,8 @@ export class Commands {
           );
 
           await ShortcodesHelpers.init(options.shortcodesFolder);
+
+          // console.log("Parsed shortcodes");
         }
 
         await Publish.start(options);

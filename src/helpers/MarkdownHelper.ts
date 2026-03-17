@@ -1,6 +1,8 @@
 import CleanCSS from "clean-css";
 import fg from "fast-glob";
 import MarkdownIt from "markdown-it";
+import markdownItAnchor from "markdown-it-anchor";
+import markdownItTableOfContents from "markdown-it-table-of-contents";
 import { CliCommand, ShortcodesHelpers, TempDataHelper } from "@helpers";
 import { CommandArguments, MarkdownSettings } from "@models";
 import hljs from "highlight.js";
@@ -56,11 +58,11 @@ export class MarkdownHelper {
         }</code></pre>`;
       },
     })
-      .use(require("markdown-it-anchor"), {
+      .use(markdownItAnchor, {
         permalink: true,
         permalinkClass: `toc-anchor`,
       })
-      .use(require("markdown-it-table-of-contents"), {
+      .use(markdownItTableOfContents, {
         includeLevel: options.tocLevels,
       });
 

@@ -1,6 +1,11 @@
-const changelog = require('../changelog.json');
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const changelogPath = path.join(__dirname, '../changelog.json');
+const changelog = JSON.parse(fs.readFileSync(changelogPath, { encoding: 'utf-8' }));
 
 if (changelog && changelog.length > 0) {
   const markdown = [];

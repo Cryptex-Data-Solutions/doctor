@@ -10,7 +10,10 @@ export class Logger {
 
   public static debug(msg: any) {
     if (Logger.isDebugRun) {
-      console.log(kleur.bgYellow().white("DEBUG"), typeof msg === "string" ? msg : JSON.stringify(msg));
+      const formattedMessage = typeof msg === "string" ? msg : JSON.stringify(msg);
+      process.stderr.write(
+        `${kleur.bgYellow().white("DEBUG")} ${formattedMessage}\n`
+      );
     }
   }
 

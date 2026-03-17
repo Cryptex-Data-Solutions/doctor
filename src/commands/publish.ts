@@ -28,6 +28,14 @@ export class Publish {
       )}`
     );
 
+    console.log("Running the publish command");
+    // console.log(
+    //   Logger.mask(
+    //     JSON.stringify(options, null, 2),
+    //     [options.password, options.certificateBase64Encoded]
+    //   )
+    // );
+
     if (!(await existsAsync(options.startFolder))) {
       return Promise.reject(
         new Error(`The provided folder location doesn't exist.`)
@@ -43,6 +51,12 @@ export class Publish {
     }
 
     const { startFolder, webUrl } = options;
+
+    // console.log("Starting the publishing process with the following configuration:");
+    // console.log({
+    //   startFolder,
+    //   webUrl
+    // });
 
     let ouput: PublishOutput = {
       navigation: options.menu ? { ...options.menu } : null,
@@ -63,7 +77,7 @@ export class Publish {
       {
         title: `Multilingual site configuration`,
         task: async (ctx: any) => await MultilingualHelper.start(ctx, options),
-        enabled: () => !!options.multilingual,
+        enabled: () => !!options.multilingual.enableTranslations,
       },
       {
         title: `Fetch all markdown files`,
@@ -93,7 +107,9 @@ export class Publish {
         task: async (ctx: any) => await Cleanup.start(ctx, options),
         enabled: () => options.cleanEnd && options.confirm,
       },
-    ])
+    ], {
+      renderer: options.debug ? "verbose" : "default",
+    })
       .run()
       .catch((err) => {
         console.log("");

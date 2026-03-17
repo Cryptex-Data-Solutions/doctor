@@ -1,31 +1,14 @@
 import { CliCommand } from "./CliCommand.js";
 import crossSpawn from "cross-spawn";
+import { createRequire } from "node:module";
 import { Logger } from "./logger.js";
 import { defer, StatusHelper } from "./index.js";
 import { Deferred } from "@models";
 import { execAsync } from "@utils";
+import { executeCommand } from "@pnp/cli-microsoft365";
 
-type M365CommandListener = {
-  stdout: (message: any) => void;
-  stderr: (message: any) => void;
-};
-
-type M365CommandOutput = {
-  error?: {
-    message: string;
-    code?: number;
-  };
-  stdout: string;
-  stderr: string;
-};
-
-type M365ExecuteCommand = (
-  commandName: string,
-  options: any,
-  listener?: M365CommandListener
-) => Promise<M365CommandOutput>;
-
-let executeCommandRef: M365ExecuteCommand | null = null;
+const EXECUTE_COMMAND_TIMEOUT_MS = 120000;
+const require = createRequire(import.meta.url);
 
 const knownShorthandOptions: { [key: string]: string } = {
   o: "output",
@@ -45,7 +28,7 @@ process.on("unhandledRejection", (reason, promise) => {
  * @param shouldSpawn
  * @param toMask
  */
-export const execScript = async <T>(
+export const runCommand = async <T>(
   args: string[] = [],
   shouldRetry: boolean = false,
   shouldSpawn: boolean = false,
@@ -69,7 +52,7 @@ export const execScript = async <T>(
 
         // Waiting 5 seconds in order to make sure that the call did not happen too fast after the previous failure
         setTimeout(async () => {
-          execScript(args, shouldRetry, shouldSpawn, toMask, deferred);
+          runCommand(args, shouldRetry, shouldSpawn, toMask, deferred);
         }, 5000);
       } else {
         deferred.reject(err);
@@ -77,6 +60,164 @@ export const execScript = async <T>(
     });
 
   return deferred.promise;
+};
+
+export const executeWithRetry = async (
+  commandName: string,
+  options: any,
+  shouldRetry: boolean
+) => {
+  try {
+    Logger.debug(
+      `Executing command: ${commandName} with options: ${JSON.stringify(options)}`
+    );
+
+    const result = await executeThroughCliWithTimeout(commandName, options);
+    Logger.debug(
+      `Command completed: ${commandName}. stdout length: ${
+        result?.stdout?.length || 0
+      }, stderr length: ${result?.stderr?.length || 0}`
+    );
+    return result;
+  } catch (e) {
+    if (shouldRetry) {
+      Logger.debug(`Doctor will retry to execute the command again.`);
+      StatusHelper.addRetry();
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      return await executeThroughCliWithTimeout(commandName, options);
+    }
+    throw e;
+  }
+};
+
+const executeThroughCliWithTimeout = async (
+  commandName: string,
+  options: any
+) => {
+  const commandParts = commandName.split(" ").filter(Boolean);
+  const optionArgs = serializeOptionsToArgv(options);
+  const fullArgs = [...commandParts, ...optionArgs];
+  const invocation = resolveCliInvocation(CliCommand.getName(), fullArgs);
+
+  Logger.debug(
+    `CLI exec: ${invocation.command} ${invocation.args
+      .map((arg) => (arg.indexOf(" ") !== -1 ? `"${arg}"` : arg))
+      .join(" ")}`
+  );
+
+  return await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+    const child = crossSpawn(invocation.command, invocation.args, {
+      env: {
+        ...process.env,
+        CLIMICROSOFT365_NOUPDATE: "1",
+      },
+    });
+    let stdout = "";
+    let stderr = "";
+    let didTimeout = false;
+    let isSettled = false;
+
+    const timeout = setTimeout(() => {
+      didTimeout = true;
+      child.kill("SIGTERM");
+      reject(
+        new Error(`Command timed out after ${EXECUTE_COMMAND_TIMEOUT_MS}ms`)
+      );
+    }, EXECUTE_COMMAND_TIMEOUT_MS);
+
+    child.stdout.on("data", (data) => {
+      stdout += `${data}`;
+    });
+
+    child.stderr.on("data", (data) => {
+      stderr += `${data}`;
+    });
+
+    child.on("error", (error) => {
+      if (isSettled) {
+        return;
+      }
+      isSettled = true;
+      clearTimeout(timeout);
+      reject(error);
+    });
+
+    // Resolve on process exit so we don't hang waiting for stream close.
+    child.on("exit", (code) => {
+      if (isSettled) {
+        return;
+      }
+      isSettled = true;
+      clearTimeout(timeout);
+
+      if (didTimeout) {
+        return;
+      }
+
+      if (code && code !== 0) {
+        reject(new Error(stderr || stdout || `Command exited with code ${code}`));
+        return;
+      }
+
+      resolve({ stdout, stderr });
+    });
+  });
+};
+
+const resolveCliInvocation = (
+  baseCommand: string,
+  args: string[]
+): { command: string; args: string[] } => {
+  const normalized = (baseCommand || "").toLowerCase();
+
+  if (normalized === "m365" || normalized === "localm365") {
+    try {
+      const cliEntrypoint = require.resolve(
+        "@pnp/cli-microsoft365/dist/index.js"
+      );
+
+      return {
+        command: process.execPath,
+        args: [cliEntrypoint, ...args],
+      };
+    } catch {
+      // Fallback to direct command execution if package resolution fails.
+      return {
+        command: baseCommand,
+        args,
+      };
+    }
+  }
+
+  return {
+    command: baseCommand,
+    args,
+  };
+};
+
+const serializeOptionsToArgv = (options: any): string[] => {
+  if (!options || typeof options !== "object") {
+    return [];
+  }
+
+  const parts: string[] = [];
+
+  for (const [key, value] of Object.entries(options)) {
+    if (typeof value === "undefined" || value === null || value === false) {
+      continue;
+    }
+
+    parts.push(`--${key}`);
+
+    if (value === true) {
+      continue;
+    }
+
+    parts.push(`${value}`);
+  }
+
+  return parts;
 };
 
 const promiseExecScript = async <T>(
@@ -94,7 +235,6 @@ const promiseExecScript = async <T>(
 
     if (usesM365Api(CliCommand.getName())) {
       try {
-        const executeCommand = await getM365ExecuteCommand();
         const parsed = parseM365CommandArgs(args);
 
         const listener = shouldSpawn
@@ -164,16 +304,6 @@ const promiseExecScript = async <T>(
 
 const usesM365Api = (commandName: string): boolean => {
   return ["m365", "localm365"].indexOf(commandName.toLowerCase()) !== -1;
-};
-
-const getM365ExecuteCommand = async (): Promise<M365ExecuteCommand> => {
-  if (executeCommandRef) {
-    return executeCommandRef;
-  }
-
-  const m365Api = await import("@pnp/cli-microsoft365");
-  executeCommandRef = m365Api.executeCommand;
-  return executeCommandRef;
 };
 
 const parseM365CommandArgs = (args: string[]): {

@@ -37,13 +37,20 @@ export class DoctorTranspiler {
   ): Promise<Observable<string>> {
     const { webUrl } = options;
 
+    Logger.debug("Starting processing the markdown files...");
+    Logger.debug(`Web URL: ${webUrl}`);
+
     return new Observable((observer) => {
       (async () => {
         const { files } = ctx;
 
+        Logger.debug(`Number of markdown files found: ${files.length}`);
+
         await PagesHelper.getAllPages(webUrl);
 
         for (const file of files) {
+          Logger.debug(`Processing file: ${file}`);
+
           try {
             await this.processFile(file, observer, options, output);
           } catch (e) {
@@ -214,16 +221,6 @@ export class DoctorTranspiler {
             (existed && !skipExistingPages) ||
             (existed && languagePageSlug)
           ) {
-            // Check if the header of the page needs to be changed
-            await HeaderHelper.set(
-              file,
-              webUrl,
-              slug,
-              header,
-              options,
-              !!(template || options.pageTemplate)
-            );
-
             // Retrieving all the controls from the page, so that we can start replacing the
             const controlData: string = await PagesHelper.getPageControls(
               webUrl,
@@ -246,6 +243,17 @@ export class DoctorTranspiler {
                 file.endsWith(`.machinetranslated.md`)
               );
             }
+
+            // Apply the page header after the page has content, because the CLI header command
+            // fails on pages with uninitialized CanvasContent1/LayoutWebpartsContent.
+            await HeaderHelper.set(
+              file,
+              webUrl,
+              slug,
+              header,
+              options,
+              !!(template || options.pageTemplate)
+            );
 
             // Check if metadata needs to be added to the page
             if (metadata) {

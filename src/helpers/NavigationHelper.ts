@@ -1,7 +1,6 @@
 import { CliCommand } from "./index.js";
 import { Menu, MenuItem, MenuType, NavigationItem } from "@models";
-import { ArgumentsHelper } from "./ArgumentsHelper.js";
-import { execScript } from "./execScript.js";
+import { executeWithRetry } from "./runCommand.js";
 import { Logger } from "./logger.js";
 
 type LocationType = "QuickLaunch" | "TopNavigationBar";
@@ -238,28 +237,18 @@ export class NavigationHelper {
    * @param type
    */
   private static async getNavigationElms(webUrl: string, type: LocationType) {
-    let args = [
-      `spo`,
-      `navigation`,
-      `node`,
-      `list`,
-      `--webUrl`,
-      `"${webUrl}"`,
-      `--location`,
-      type,
-      `-o`,
-      `json`,
-    ];
-    if (args && typeof args === "string") {
-      args = JSON.parse(args);
-    }
-
     if (type === "QuickLaunch") {
       if (!this.qlElms) {
-        this.qlElms = await execScript<NavigationItem[]>(
-          [...args],
+        const { stdout } = await executeWithRetry(
+          "spo navigation node list",
+          {
+            webUrl,
+            location: type,
+            output: "json",
+          },
           CliCommand.getRetry()
         );
+        this.qlElms = stdout;
       }
       return typeof this.qlElms === "string"
         ? JSON.parse(this.qlElms)
@@ -268,10 +257,16 @@ export class NavigationHelper {
 
     if (type === "TopNavigationBar") {
       if (!this.tnElms) {
-        this.tnElms = await execScript<NavigationItem[]>(
-          [...args],
+        const { stdout } = await executeWithRetry(
+          "spo navigation node list",
+          {
+            webUrl,
+            location: type,
+            output: "json",
+          },
           CliCommand.getRetry()
         );
+        this.tnElms = stdout;
       }
       return typeof this.tnElms === "string"
         ? JSON.parse(this.tnElms)
@@ -293,10 +288,14 @@ export class NavigationHelper {
     id: number
   ) {
     if (id) {
-      await execScript(
-        ArgumentsHelper.parse(
-          `spo navigation node remove --webUrl "${webUrl}" --location "${type}" --id "${id}" --confirm`
-        ),
+      await executeWithRetry(
+        "spo navigation node remove",
+        {
+          webUrl,
+          location: type,
+          id,
+          force: true,
+        },
         CliCommand.getRetry()
       );
     }
@@ -316,14 +315,26 @@ export class NavigationHelper {
     url: string,
     id: number = null
   ): Promise<NavigationItem | null> {
-    const rootElm = id ? `--parentNodeId "${id}"` : "";
     if (name) {
-      const item = await execScript(
-        ArgumentsHelper.parse(
-          `spo navigation node add --webUrl "${webUrl}" --location "${type}" --title "${name}" --url "${url}" ${rootElm} --output json`
-        ),
+      const options: any = {
+        webUrl,
+        title: name,
+        url,
+        output: "json",
+      };
+
+      if (id) {
+        options.parentNodeId = id;
+      } else {
+        options.location = type;
+      }
+
+      const { stdout } = await executeWithRetry(
+        "spo navigation node add",
+        options,
         CliCommand.getRetry()
       );
+      const item = stdout;
 
       return typeof item === "string" ? JSON.parse(item) : item;
     }

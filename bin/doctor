@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --inspect
+process.env.DEBUG = "true";
 
 import { cli } from '../dist/cli.js';
 await cli(process.argv);

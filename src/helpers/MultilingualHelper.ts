@@ -37,6 +37,12 @@ export class MultilingualHelper {
     const { webUrl, multilingual } = options;
     const url = webUrl.endsWith("/") ? webUrl : `${webUrl}/`;
 
+    // console.log(`Processing multilingual settings for the site...`, {
+    //   webUrl,
+    //   url,
+    //   multilingual
+    // });
+
     if (!multilingual) {
       return;
     }
@@ -57,6 +63,8 @@ export class MultilingualHelper {
         Authorization: `Bearer ${token.trim()}`,
       }
     );
+
+    console.log(`Multilingual feature is currently ${isEnabled ? "enabled" : "disabled"}.`);
 
     if (multilingual.enableTranslations) {
       // When the feature is enabled, the DefinitionId is returned

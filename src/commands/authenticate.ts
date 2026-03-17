@@ -1,8 +1,42 @@
 import Listr from "listr";
 import { CommandArguments } from "@models";
-import { ArgumentsHelper, execScript } from "@helpers";
+import { Logger } from "@helpers";
+import { executeCommand } from "@pnp/cli-microsoft365";
 
 export class Authenticate {
+  private static async executeLogin(
+    loginOptions: any,
+    toMask: string[] = [],
+    shouldStreamOutput: boolean = false
+  ) {
+    try {
+      const result = await executeCommand(
+        "login",
+        loginOptions,
+        shouldStreamOutput
+          ? {
+              stdout: (message: any) => {
+                console.log(`${message}`);
+              },
+              stderr: (message: any) => {
+                console.error(`${Logger.mask(`${message}`, toMask)}`);
+              },
+            }
+          : undefined
+      );
+
+      if (result.stderr) {
+        throw new Error(Logger.mask(result.stderr, toMask));
+      }
+    } catch (e: any) {
+      const message =
+        typeof e === "string"
+          ? e
+          : e?.error?.message || e?.stderr || e?.message || JSON.stringify(e);
+      throw new Error(Logger.mask(message, toMask));
+    }
+  }
+
   /**
    * Authentication task - Splitted for output log of the device code
    * @param auth
@@ -22,30 +56,37 @@ export class Authenticate {
         title: `Authenticate to M365 with ${auth}`,
         task: async () => {
           if (auth === "deviceCode") {
-            await execScript([`login`], false, true);
+            await this.executeLogin({}, [], true);
           } else if (auth === "certificate") {
-            await execScript(
-              ArgumentsHelper.parse(
-                `login --authType certificate --appId "${appId}" --tenant "${tenant}" --certificateBase64Encoded "${certificateBase64Encoded}" ${
-                  password ? `--password ${password}` : `--password`
-                }`
-              ),
-              false,
-              false,
-              [certificateBase64Encoded, password]
-            );
+            const certificateLoginOptions: any = {
+              authType: "certificate",
+              appId,
+              tenant,
+              certificateBase64Encoded,
+            };
+
+            if (password) {
+              certificateLoginOptions.password = password;
+            }
+
+            await this.executeLogin(certificateLoginOptions, [
+              certificateBase64Encoded,
+              password,
+            ]);
           } else {
-            await execScript(
-              ArgumentsHelper.parse(
-                `login --authType password --userName "${username}" --password "${password}"`
-              ),
-              false,
-              false,
+            await this.executeLogin(
+              {
+                authType: "password",
+                userName: username,
+                password,
+              },
               [password]
             );
           }
         },
       },
-    ]).run();
+    ], {
+      renderer: options.debug ? "verbose" : "default",
+    }).run();
   }
 }

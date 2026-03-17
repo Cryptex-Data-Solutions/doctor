@@ -1,7 +1,11 @@
-const { chromium } = require('playwright-chromium');
-const spauth = require('node-sp-auth');
-const fs = require('fs');
-const path = require('path');
+import { chromium } from 'playwright-chromium';
+import spauth from 'node-sp-auth';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const testSite = async (page, siteUrl, type) => {
   await page.setViewportSize({

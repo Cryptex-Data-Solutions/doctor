@@ -1,12 +1,12 @@
 import { CommandArguments, File, Folder } from "@models";
 import {
-  execScript,
+  executeWithRetry,
   CliCommand,
   ListHelpers,
   Logger,
-  ArgumentsHelper,
 } from "@helpers";
 import { basename } from "path";
+import { executeCommand } from "@pnp/cli-microsoft365";
 
 export class FileHelpers {
   private static allPages: File[] = [];
@@ -51,12 +51,10 @@ export class FileHelpers {
           // Check if file exists
           const filePath = `${crntFolder}/${basename(imgPath)}`;
           const relativeUrl = this.getRelUrl(webUrl, filePath);
-          const fileData = await execScript(
-            ArgumentsHelper.parse(
-              `spo file get --webUrl "${webUrl}" --url "${relativeUrl}"`
-            ),
-            false
-          );
+          const fileData = await executeCommand("spo file get", {
+            webUrl,
+            url: relativeUrl,
+          });
           Logger.debug(`File data retrieved: ${JSON.stringify(fileData)}`);
         } catch (e) {
           await this.upload(webUrl, crntFolder, imgPath);
@@ -77,12 +75,16 @@ export class FileHelpers {
     if (options.cleanStart) {
       try {
         const { webUrl } = options;
-        let filesData: File[] | string = await execScript<string>(
-          ArgumentsHelper.parse(
-            `spo file list --webUrl "${webUrl}" --folder "${crntFolder}" --output json`
-          ),
+        const { stdout: filesOutput } = await executeWithRetry(
+          "spo file list",
+          {
+            webUrl,
+            folder: crntFolder,
+            output: "json",
+          },
           CliCommand.getRetry()
         );
+        let filesData: File[] | string = filesOutput;
         if (filesData && typeof filesData === "string") {
           filesData = JSON.parse(filesData);
         }
@@ -94,21 +96,28 @@ export class FileHelpers {
             const filePath = `${crntFolder}${file.ServerRelativeUrl.toLowerCase()
               .split(crntFolder)
               .pop()}`;
-            await execScript<string>(
-              ArgumentsHelper.parse(
-                `spo file remove --webUrl "${webUrl}" --url "${filePath}" --confirm`
-              ),
+            await executeWithRetry(
+              "spo file remove",
+              {
+                webUrl,
+                url: filePath,
+                confirm: true,
+              },
               CliCommand.getRetry()
             );
           }
         }
 
-        let folderData: Folder[] | string = await execScript<string>(
-          ArgumentsHelper.parse(
-            `spo folder list --webUrl "${webUrl}" --parentFolderUrl "${crntFolder}" --output json`
-          ),
+        const { stdout: foldersOutput } = await executeWithRetry(
+          "spo folder list",
+          {
+            webUrl,
+            parentFolderUrl: crntFolder,
+            output: "json",
+          },
           CliCommand.getRetry()
         );
+        let folderData: Folder[] | string = foldersOutput;
         if (folderData && typeof folderData === "string") {
           folderData = JSON.parse(folderData);
         }
@@ -125,10 +134,13 @@ export class FileHelpers {
             const folderPath = `${crntFolder}${folder.ServerRelativeUrl.toLowerCase()
               .split(crntFolder)
               .pop()}`;
-            await execScript<string>(
-              ArgumentsHelper.parse(
-                `spo folder remove --webUrl "${webUrl}" --folderUrl "${folderPath}" --confirm`
-              ),
+            await executeWithRetry(
+              "spo folder remove",
+              {
+                webUrl,
+                folderUrl: folderPath,
+                confirm: true,
+              },
               CliCommand.getRetry()
             );
           }
@@ -149,17 +161,28 @@ export class FileHelpers {
     crntFolder: string
   ): Promise<File[]> {
     if (this.allPages && this.allPages.length > 0) {
+      Logger.debug(`Using cached pages data for site: ${webUrl}`);
+
       return this.allPages;
     }
 
+    Logger.debug(`Retrieving site pages library for site: ${webUrl}`);
+
     const pageList = await ListHelpers.getSitePagesList(webUrl);
 
-    let filesData: File[] | string = await execScript<string>(
-      ArgumentsHelper.parse(
-        `spo listitem list --webUrl "${webUrl}" --id "${pageList.Id}" --fields "ID,Title,FileRef" --output json`
-      ),
+    Logger.debug(`Retrieving all the existing pages from the site: ${webUrl}`);
+
+    const { stdout } = await executeWithRetry(
+      "spo listitem list",
+      {
+        webUrl,
+        listId: pageList.Id,
+        fields: "ID,Title,FileRef",
+        output: "json",
+      },
       CliCommand.getRetry()
     );
+    let filesData: File[] | string = stdout;
     if (filesData && typeof filesData === "string") {
       filesData = JSON.parse(filesData);
     }
@@ -180,10 +203,13 @@ export class FileHelpers {
     imgPath: string
   ) {
     Logger.debug(`Uploading file "${imgPath}" to ${crntFolder}"`);
-    await execScript(
-      ArgumentsHelper.parse(
-        `spo file add --webUrl "${webUrl}" --folder "${crntFolder}" --path "${imgPath}"`
-      ),
+    await executeWithRetry(
+      "spo file add",
+      {
+        webUrl,
+        folder: crntFolder,
+        path: imgPath,
+      },
       CliCommand.getRetry()
     );
   }
