@@ -6,7 +6,7 @@ weight: 7
 draft: false
 ---
 
-Using `doctor` works best when you implement it on an automated CI/CD pipeline. For instance, each time you push a change to your source control system you use, let the pages rebuild themselves. 
+Using `doctor` works best when you implement it on an automated CI/CD pipeline. For instance, each time you push a change to your source control system you use, let the pages rebuild themselves.
 
 Azure DevOps and GitHub actions are a perfect choice for it, but `doctor` can run on any platform which allows you to run `node.js` CLI tools.
 

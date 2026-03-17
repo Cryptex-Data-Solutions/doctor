@@ -5,7 +5,7 @@ lastmod: 2021-02-22T10:06:07.167Z
 weight: 6
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 If you want to use certificate authentication, you will need to follow the next steps before you can use `doctor`.
@@ -18,7 +18,7 @@ If you want to use certificate authentication, you will need to follow the next 
 
 ![](./assets/app-reg.png)
 
-- Once the app is created, click on **API Permissions** and add the **Sites.FullControl.All** application permission scope from SharePoint 
+- Once the app is created, click on **API Permissions** and add the **Sites.FullControl.All** application permission scope from SharePoint
 
 ![](./assets/app-permissions.png)
 

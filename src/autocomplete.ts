@@ -18,23 +18,27 @@ export class Autocomplete {
   }
 
   /**
-   * Install the autocomplete functionality
+   * Installs shell initialization required for Doctor command autocompletion.
+   * @returns Nothing.
    */
   public setup() {
     this.complete.setupShellInitFile();
   }
 
   /**
-   * Cleanup the autocomplete functionality
+   * Removes shell initialization that was added for Doctor autocompletion.
+   * @returns Nothing.
    */
   public cleanup() {
     this.complete.cleanupShellInitFile();
   }
 
   /**
-   * Handles the autocomplete per command
-   * @param fragment
-   * @param data
+   * Resolves autocomplete suggestions based on the current command line context.
+   * Returns command names for the first argument and available flags for subsequent arguments.
+   * @param fragment The current token fragment being completed.
+   * @param data Omelette callback payload containing line context and response handler.
+   * @returns Nothing. Suggestions are returned through data.reply(...).
    */
   private handleAutocomplete = (
     fragment: string,

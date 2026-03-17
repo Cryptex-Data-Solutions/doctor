@@ -4,6 +4,14 @@ import { Logger } from "@helpers";
 import { executeCommand } from "@pnp/cli-microsoft365";
 
 export class Authenticate {
+  /**
+   * Executes the M365 CLI login command and normalizes/masks potential errors.
+   * Optionally streams command output for interactive authentication flows.
+   * @param loginOptions CLI login options passed to the login command.
+   * @param toMask Sensitive values that must be masked in command output/errors.
+   * @param shouldStreamOutput Indicates whether stdout/stderr should be streamed in real time.
+   * @returns A promise that resolves when authentication succeeds.
+   */
   private static async executeLogin(
     loginOptions: any,
     toMask: string[] = [],
@@ -38,8 +46,10 @@ export class Authenticate {
   }
 
   /**
-   * Authentication task - Splitted for output log of the device code
-   * @param auth
+   * Authenticates against Microsoft 365 using the configured auth mode.
+   * Supports device code, certificate-based, and username/password flows.
+   * @param options Command options containing authentication settings and debug mode.
+   * @returns A promise that resolves when authentication completes successfully.
    */
   public static async init(options: CommandArguments) {
     const {

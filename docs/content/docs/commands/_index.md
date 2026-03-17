@@ -5,12 +5,12 @@ lastmod: 2021-03-04T09:21:32.386Z
 weight: 4
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 ### Cleanup
 
-The `doctor cleanup` command is there to uninstall the autocomplete functionality from `doctor`. 
+The `doctor cleanup` command is there to uninstall the autocomplete functionality from `doctor`.
 
 > **Important**: You do not need to use it if you never ran the `doctor setup` command.
 

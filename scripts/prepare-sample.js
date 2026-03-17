@@ -1,6 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +19,8 @@ if (file) {
 
   if (data && data.multilingual && data.multilingual.translator) {
     data.multilingual.translator.key = process.env.TRANSLATOR_KEY;
-    fs.writeFileSync(newPath, JSON.stringify(data, null, 2), { encoding: "utf-8" });
+    fs.writeFileSync(newPath, JSON.stringify(data, null, 2), {
+      encoding: "utf-8",
+    });
   }
 }

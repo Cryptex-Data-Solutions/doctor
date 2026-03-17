@@ -5,7 +5,7 @@ lastmod: 2021-03-10T14:24:35.121Z
 weight: 4
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 Options are specified via command arguments, or within a `doctor.json` file (automatically gets created on initialization `doctor init`).
@@ -139,7 +139,7 @@ Manual translation example:
     ],
     "overwriteTranslationsOnChange": true,
     "translator:" null
-  } 
+  }
 }
 ```
 
@@ -158,7 +158,7 @@ Machine translation example:
       "endpoint": "https://api.cognitive.microsofttranslator.com/",
       "region": "<region name, example: westeurope>"
     }
-  } 
+  }
 }
 ```
 
@@ -231,11 +231,13 @@ You can also define a static navigation structure in the `doctor.json` file. Exa
 {
   "menu": {
     "QuickLaunch": {
-      "items": [{
-        "id": "documentation",
-        "name": "Documentation",
-        "url": ""
-      }]
+      "items": [
+        {
+          "id": "documentation",
+          "name": "Documentation",
+          "url": ""
+        }
+      ]
     }
   }
 }

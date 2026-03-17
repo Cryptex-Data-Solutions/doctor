@@ -17,8 +17,10 @@ import { existsAsync } from "@utils";
 
 export class Publish {
   /**
-   * Publishes the markdown files to SharePoint
-   * @param options
+   * Publishes markdown content and assets to SharePoint using the configured
+   * processing pipeline (cleanup, transpile, navigation, design, and post-cleanup).
+   * @param options Command options that control authentication, source paths, and publish behavior.
+   * @returns A promise that resolves when the publish pipeline completes.
    */
   public static async start(options: CommandArguments) {
     Logger.debug(

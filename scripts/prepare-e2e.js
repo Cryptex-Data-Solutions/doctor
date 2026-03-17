@@ -1,6 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +18,8 @@ if (fs.existsSync(config)) {
     configJson.env.PASSWORD = process.env.PASSWORD;
     configJson.env.SITEURL = process.env.SITEURL;
     configJson.screenshotsFolder = `cypress/screenshots/${process.env.ENVIRONMENT}`;
-    fs.writeFileSync(newPath, JSON.stringify(configJson), { encoding: "utf-8" });
+    fs.writeFileSync(newPath, JSON.stringify(configJson), {
+      encoding: "utf-8",
+    });
   }
 }

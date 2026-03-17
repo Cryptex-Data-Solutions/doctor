@@ -1,6 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,10 +12,10 @@ const lines = doctorContents.split(`\n`);
 lines[0] = `#!/usr/bin/env node`;
 
 const debugLineIndex = lines.findIndex(
-	(line) => line.trim() === 'process.env.DEBUG = "true";'
+  (line) => line.trim() === 'process.env.DEBUG = "true";',
 );
 if (debugLineIndex !== -1) {
-	lines.splice(debugLineIndex, 1);
+  lines.splice(debugLineIndex, 1);
 }
 
 fs.writeFileSync(doctorFile, lines.join(`\n`));

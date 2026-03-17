@@ -4,6 +4,12 @@ import { OptionsHelper, TempDataHelper } from "@helpers";
 import { Commands } from "./main.js";
 import { CommandArguments } from "@models";
 
+/**
+ * Runs the CLI entry flow: resolves version/configuration, executes the selected
+ * command, and ensures temporary data is cleared on success or failure.
+ * @param args Raw CLI arguments passed to the process.
+ * @returns A promise that resolves when the command finishes. The process exits with code 0 or 1.
+ */
 export async function cli(args: string[]) {
   const version = await Version.getVersion();
   console.log("");
