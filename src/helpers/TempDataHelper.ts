@@ -1,7 +1,7 @@
-import * as fg from "fast-glob";
+import fg from "fast-glob";
 import { join } from "path";
-import { Logger } from ".";
-import { CliCommand } from "./CliCommand";
+import { Logger } from "./index.js";
+import { CliCommand } from "./CliCommand.js";
 import { existsAsync, mkdirAsync, rmAsync, writeFileAsync } from "@utils";
 
 export class TempDataHelper {

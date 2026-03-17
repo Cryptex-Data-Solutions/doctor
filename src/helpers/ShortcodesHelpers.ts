@@ -1,13 +1,13 @@
 import { join } from "path";
-import * as fg from "fast-glob";
+import fg from "fast-glob";
 import * as cheerio from "cheerio";
 import {
   IconRenderer,
   CalloutRenderer,
   TableOfContentsRenderer,
-} from "../shortcodes";
+} from "../shortcodes/index.js";
 import { Shortcode, TocPosition } from "@models";
-import { Logger, TelemetryHelper } from "@helpers";
+import { Logger } from "@helpers";
 import { existsAsync } from "@utils";
 
 export class ShortcodesHelpers {
@@ -42,7 +42,6 @@ export class ShortcodesHelpers {
       }
     }
 
-    TelemetryHelper.trackCustomShortcodes(files.length);
   }
 
   /**
@@ -86,11 +85,12 @@ export class ShortcodesHelpers {
     );
 
     Logger.debug(`Doctor uses ${tags.length} shortcodes for HTML parsing.`);
-    TelemetryHelper.trackShortcodeUsage(tags.length);
 
     const $ = cheerio.load(htmlMarkup, {
-      xmlMode: true,
-      decodeEntities: false,
+      xml: {
+        xmlMode: true,
+        decodeEntities: false,
+      },
     });
 
     for (const tag of tags) {

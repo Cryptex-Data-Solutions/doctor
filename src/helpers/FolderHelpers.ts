@@ -24,7 +24,7 @@ export class FolderHelpers {
           try {
             let scriptData: any = await execScript(
               ArgumentsHelper.parse(
-                `spo folder get --webUrl "${webUrl}" --folderUrl "${folderToProcess}" -o json`
+                `spo folder get --webUrl "${webUrl}" --folderUrl "${folderToProcess}" --output json`
               ),
               false
             );

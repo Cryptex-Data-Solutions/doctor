@@ -1,4 +1,4 @@
-import { Logger } from "./logger";
+import { Logger } from "./logger.js";
 import { v4 as uuidv4 } from "uuid";
 import { TranslationsResponse } from "@models";
 

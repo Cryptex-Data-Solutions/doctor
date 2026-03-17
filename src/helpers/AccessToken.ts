@@ -1,4 +1,4 @@
-import { ArgumentsHelper, execScript, Logger } from ".";
+import { ArgumentsHelper, execScript, Logger } from "./index.js";
 
 
 export class AccessToken {

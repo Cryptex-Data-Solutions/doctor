@@ -1,10 +1,10 @@
-import * as CleanCSS from "clean-css";
-import * as fg from "fast-glob";
-import md = require("markdown-it");
-import hljs = require("highlight.js");
-import { encode } from "html-entities";
+import CleanCSS from "clean-css";
+import fg from "fast-glob";
+import MarkdownIt from "markdown-it";
 import { CliCommand, ShortcodesHelpers, TempDataHelper } from "@helpers";
 import { CommandArguments, MarkdownSettings } from "@models";
+import hljs from "highlight.js";
+import { encode } from "html-entities";
 
 export class MarkdownHelper {
   /**
@@ -37,7 +37,7 @@ export class MarkdownHelper {
    * @returns
    */
   public static async getHtmlData(markdown: string, options: CommandArguments) {
-    const converter = md({
+    const converter = new MarkdownIt({
       html: true,
       breaks: true,
       highlight: (str, lang) => {
@@ -46,7 +46,7 @@ export class MarkdownHelper {
             return `<pre class="hljs ${lang
               .toLowerCase()
               .replace(/ /g, "_")}"><code>${
-              hljs.highlight(lang, str, true).value
+              hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
             }</code></pre>`;
           } catch (__) {}
         }

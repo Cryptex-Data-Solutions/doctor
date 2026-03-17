@@ -79,7 +79,7 @@ export class FileHelpers {
         const { webUrl } = options;
         let filesData: File[] | string = await execScript<string>(
           ArgumentsHelper.parse(
-            `spo file list --webUrl "${webUrl}" -f "${crntFolder}" -o json`
+            `spo file list --webUrl "${webUrl}" --folder "${crntFolder}" --output json`
           ),
           CliCommand.getRetry()
         );
@@ -105,7 +105,7 @@ export class FileHelpers {
 
         let folderData: Folder[] | string = await execScript<string>(
           ArgumentsHelper.parse(
-            `spo folder list --webUrl "${webUrl}" --parentFolderUrl "${crntFolder}" -o json`
+            `spo folder list --webUrl "${webUrl}" --parentFolderUrl "${crntFolder}" --output json`
           ),
           CliCommand.getRetry()
         );
@@ -156,7 +156,7 @@ export class FileHelpers {
 
     let filesData: File[] | string = await execScript<string>(
       ArgumentsHelper.parse(
-        `spo listitem list --webUrl "${webUrl}" --id "${pageList.Id}" --fields "ID,Title,FileRef" -o json`
+        `spo listitem list --webUrl "${webUrl}" --id "${pageList.Id}" --fields "ID,Title,FileRef" --output json`
       ),
       CliCommand.getRetry()
     );

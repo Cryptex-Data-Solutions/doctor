@@ -1,4 +1,4 @@
-import * as omelette from "omelette";
+import omelette from "omelette";
 import { Command } from "@commands";
 import { OptionsHelper } from "@helpers";
 

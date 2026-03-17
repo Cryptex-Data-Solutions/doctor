@@ -1,5 +1,5 @@
-import Listr = require("listr");
-import kleur = require("kleur");
+import Listr from "listr";
+import kleur from "kleur";
 import { Authenticate } from "@commands";
 import {
   DoctorTranspiler,

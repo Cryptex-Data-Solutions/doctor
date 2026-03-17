@@ -1,7 +1,7 @@
 import { join } from "path";
-import * as arg from "arg";
-import * as kleur from "kleur";
-import * as inquirer from "inquirer";
+import arg from "arg";
+import kleur from "kleur";
+import inquirer from "inquirer";
 import { CommandArguments } from "@models";
 import { Command } from "@commands";
 import { existsAsync, readFileAsync } from "@utils";
@@ -53,7 +53,6 @@ export class OptionsHelper {
       "--retryWhenFailed": Boolean,
 
       "--disableComments": Boolean,
-      "--disableTracking": Boolean,
 
       "--skipExistingPages": Boolean,
       "--skipExisting": Boolean,
@@ -101,7 +100,7 @@ export class OptionsHelper {
         options["certificateBase64Encoded"] ||
         null,
       commandName:
-        args["--commandName"] || options["commandName"] || "localm365",
+        args["--commandName"] || options["commandName"] || "m365",
       webUrl: args["--url"] || options["url"] || null,
       startFolder: args["--folder"] || options["folder"] || "./src",
       startFolderRel: args["--folder"] || options["folder"] || "./src",
@@ -125,7 +124,6 @@ export class OptionsHelper {
         (args["--retryWhenFailed"] as any) ||
         options["retryWhenFailed"] ||
         false,
-      disableTracking: args["--disableTracking"] || false,
       menu: options["menu"] || null,
       debug:
         (process.env.DEBUG && process.env.DEBUG === "true") ||

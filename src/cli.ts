@@ -1,7 +1,7 @@
-import kleur = require("kleur");
+import kleur from "kleur";
 import { Command, Version } from "@commands";
 import { OptionsHelper, TempDataHelper } from "@helpers";
-import { Commands } from "./main";
+import { Commands } from "./main.js";
 import { CommandArguments } from "@models";
 
 export async function cli(args: string[]) {

@@ -1,6 +1,9 @@
-import kleur = require("kleur");
-import { join } from "path";
+import kleur from "kleur";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { readFileAsync } from "@utils";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export class Version {
   /**

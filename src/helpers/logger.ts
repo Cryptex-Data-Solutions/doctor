@@ -1,4 +1,4 @@
-import kleur = require("kleur");
+import kleur from "kleur";
 
 
 export class Logger {

@@ -1,4 +1,4 @@
-import { PagesHelper } from ".";
+import { PagesHelper } from "./index.js";
 import { Observable } from "rxjs";
 import { CommandArguments } from "@models";
 

@@ -1,4 +1,4 @@
-import Listr = require("listr");
+import Listr from "listr";
 import { CommandArguments } from "@models";
 import { ArgumentsHelper, execScript } from "@helpers";
 

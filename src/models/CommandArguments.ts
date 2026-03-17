@@ -1,4 +1,9 @@
-import { MarkdownSettings, Menu, MultilingualSettings, SiteDesign } from ".";
+import {
+  MarkdownSettings,
+  Menu,
+  MultilingualSettings,
+  SiteDesign,
+} from "./index.js";
 export interface CommandArguments {
   task: string;
   auth: "deviceCode" | "password" | "certificate";
@@ -15,7 +20,6 @@ export interface CommandArguments {
   retryWhenFailed: boolean;
 
   disableComments: boolean;
-  disableTracking: boolean;
 
   skipPages: boolean;
   skipNavigation: boolean;

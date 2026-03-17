@@ -1,8 +1,8 @@
-import { CliCommand } from ".";
+import { CliCommand } from "./index.js";
 import { Menu, MenuItem, MenuType, NavigationItem } from "@models";
-import { ArgumentsHelper } from "./ArgumentsHelper";
-import { execScript } from "./execScript";
-import { Logger } from "./logger";
+import { ArgumentsHelper } from "./ArgumentsHelper.js";
+import { execScript } from "./execScript.js";
+import { Logger } from "./logger.js";
 
 type LocationType = "QuickLaunch" | "TopNavigationBar";
 const WEIGHT_VALUE = 99999;
@@ -320,7 +320,7 @@ export class NavigationHelper {
     if (name) {
       const item = await execScript(
         ArgumentsHelper.parse(
-          `spo navigation node add --webUrl "${webUrl}" --location "${type}" --title "${name}" --url "${url}" ${rootElm} -o json`
+          `spo navigation node add --webUrl "${webUrl}" --location "${type}" --title "${name}" --url "${url}" ${rootElm} --output json`
         ),
         CliCommand.getRetry()
       );

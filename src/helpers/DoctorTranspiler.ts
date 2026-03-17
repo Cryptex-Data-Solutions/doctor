@@ -1,6 +1,7 @@
-import { CheerioAPI, load, Element } from "cheerio";
-import * as matter from "gray-matter";
-import * as MarkdownIt from "markdown-it";
+import { CheerioAPI, load } from "cheerio";
+import { Element } from "domhandler";
+import matter from "gray-matter";
+import MarkdownIt from "markdown-it";
 import {
   CommandArguments,
   PublishOutput,
@@ -82,6 +83,10 @@ export class DoctorTranspiler {
       const filename = basename(file);
       observer.next(`Started processing: ${filename}`);
 
+      // if (file.includes('..') || path.isAbsolute(file)) {
+      //   throw new Error(`Invalid file path`);
+      // }
+
       let contents = await readFileAsync(file, { encoding: "utf-8" });
       if (contents) {
         const markup: matter.GrayMatterFile<string> = matter(contents);
@@ -100,8 +105,10 @@ export class DoctorTranspiler {
           : this.converter.render(contents);
 
         const $ = load(htmlMarkup, {
-          xmlMode: true,
-          decodeEntities: false,
+          xml: {
+            xmlMode: true,
+            decodeEntities: false,
+          },
         });
         const imgElms = $(`img`).toArray();
         const anchorElms = $(`a`).toArray();

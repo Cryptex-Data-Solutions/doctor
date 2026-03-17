@@ -1,4 +1,4 @@
-import * as kleur from "kleur";
+import kleur from "kleur";
 import { Command, Init, Publish, Version } from "@commands";
 import { CommandArguments } from "@models";
 import {
@@ -6,9 +6,8 @@ import {
   Logger,
   ShortcodesHelpers,
   StatusHelper,
-  TelemetryHelper,
 } from "@helpers";
-import { autocomplete } from "./autocomplete";
+import { autocomplete } from "./autocomplete.js";
 
 export class Commands {
   /**
@@ -24,7 +23,6 @@ export class Commands {
 
       Logger.init(options.debug);
       CliCommand.init(options);
-      TelemetryHelper.trackTask(options);
       StatusHelper.getInstance();
 
       console.log("");
