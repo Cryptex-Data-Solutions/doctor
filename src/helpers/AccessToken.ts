@@ -10,7 +10,7 @@ export class AccessToken {
    * @returns access token
    */
   public static async get(webUrl: string) {
-    await executeCommand("spo set", { webUrl });
+    await executeCommand("spo set", { url: webUrl });
     const { stdout: token } = await executeCommand("util accesstoken get", {
       resource: `https://${new URL(webUrl).hostname}`,
     });

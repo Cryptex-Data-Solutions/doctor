@@ -64,7 +64,7 @@ export class PagesHelper {
                 {
                   webUrl,
                   url: relUrl,
-                  confirm: true,
+                  force: true,
                 },
                 CliCommand.getRetry()
               );
@@ -480,7 +480,7 @@ export class PagesHelper {
     if (pageId && pageList && metadata && Object.keys(metadata).length > 0) {
       const validatedMetadata = await this.getValidatedMetadata(
         webUrl,
-        pageList.Id,
+        pageList,
         metadata
       );
 
@@ -506,9 +506,10 @@ export class PagesHelper {
 
   private static async getValidatedMetadata(
     webUrl: string,
-    listId: string,
+    pageList: any,
     metadata: { [fieldName: string]: any }
   ): Promise<{ [fieldName: string]: any }> {
+    const listId = pageList?.Id;
     let fieldMap = this.listFieldMap[listId];
 
     if (!fieldMap) {
@@ -516,7 +517,9 @@ export class PagesHelper {
         "spo field list",
         {
           webUrl,
-          listId,
+          ...(pageList?.RootFolder?.ServerRelativeUrl
+            ? { listUrl: pageList.RootFolder.ServerRelativeUrl }
+            : { listTitle: pageList?.Title }),
           output: "json",
         },
         CliCommand.getRetry()
@@ -598,7 +601,7 @@ export class PagesHelper {
     try {
           await executeCommand("spo file checkin", {
             webUrl,
-            fileUrl: relativeUrl,
+            url: relativeUrl,
           });
     } catch (e) {
       // Might be that the file doesn't need to be checked in

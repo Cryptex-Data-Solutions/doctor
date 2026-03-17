@@ -87,16 +87,15 @@ export class SiteHelpers {
             Logger.debug(
               `Continuing without applying theme \"${siteDesign.theme}\".`
             );
-            return;
+          } else {
+            return Promise.reject(
+              new Error(
+                `Something failed while applying the site theme "${siteDesign.theme}". ${getErrorMessage(
+                  themeError
+                )}`
+              )
+            );
           }
-
-          return Promise.reject(
-            new Error(
-              `Something failed while applying the site theme "${siteDesign.theme}". ${getErrorMessage(
-                themeError
-              )}`
-            )
-          );
         }
       }
     }

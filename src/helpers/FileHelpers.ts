@@ -79,7 +79,7 @@ export class FileHelpers {
           "spo file list",
           {
             webUrl,
-            folder: crntFolder,
+            folderUrl: crntFolder,
             output: "json",
           },
           CliCommand.getRetry()
@@ -101,7 +101,7 @@ export class FileHelpers {
               {
                 webUrl,
                 url: filePath,
-                confirm: true,
+                force: true,
               },
               CliCommand.getRetry()
             );
@@ -138,8 +138,8 @@ export class FileHelpers {
               "spo folder remove",
               {
                 webUrl,
-                folderUrl: folderPath,
-                confirm: true,
+                url: folderPath,
+                force: true,
               },
               CliCommand.getRetry()
             );

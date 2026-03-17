@@ -25,7 +25,7 @@ export class FolderHelpers {
           try {
             const { stdout } = await executeCommand("spo folder get", {
               webUrl,
-              folderUrl: folderToProcess,
+              url: folderToProcess,
               output: "json",
             });
             let scriptData: any = stdout;
