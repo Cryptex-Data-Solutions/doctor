@@ -13,15 +13,9 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 ## For all commands
 
 `-a, --auth <auth>`
-: Specify the authentication type to use. Values can be `deviceCode` (default) or `password` or `certificate`.
+: Specify the authentication type to use. Values can be `deviceCode` (default) or `certificate`.
 
 > **Info**: Check out the [Certificate Authentication](../certificate-authentication) section for more information about using the `certificate` approach.
-
-`--username <username>`
-: When using `password` authentication, you need to pass the `username` and `password`.
-
-`--password <password>`
-: When using `password` authentication, you need to pass the `username` and `password`.
 
 `-u, --url <url>`
 : The URL of the site collection to use.

@@ -59,8 +59,9 @@ export class MarkdownHelper {
       },
     })
       .use(markdownItAnchor, {
-        permalink: true,
-        permalinkClass: `toc-anchor`,
+        permalink: markdownItAnchor.permalink.ariaHidden({
+          class: `toc-anchor`,
+        }),
       })
       .use(markdownItTableOfContents, {
         includeLevel: options.tocLevels,

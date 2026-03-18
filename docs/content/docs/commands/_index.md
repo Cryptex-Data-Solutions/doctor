@@ -34,10 +34,10 @@ Initialize a standard project:
 doctor init
 ```
 
-Initialize a project with your own options:
+Initialize a project using certificate authentication:
 
 ```sh
-doctor init --auth password --username <username> --password <password>
+doctor init --auth certificate --certificateBase64Encoded <certificateBase64Encoded> --appId <appId> --tenant <tenant>
 ```
 
 ### Publish

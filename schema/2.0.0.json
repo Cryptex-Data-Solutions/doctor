@@ -57,22 +57,15 @@
         "$id": "#/properties/auth",
         "type": "string",
         "title": "auth",
-        "description": "Specify the authentication type to use. Values can be `deviceCode` (default) or `password`.",
+        "description": "Specify the authentication type to use. Values can be `deviceCode` (default) or `certificate`.",
         "default": "deviceCode",
-        "enum": ["deviceCode", "password", "certificate"]
+        "enum": ["deviceCode", "certificate"]
       },
       "password": {
         "$id": "#/properties/password",
         "type": "string",
         "title": "password",
-        "description": "When using `password` or `certificate` authentication. For `password` authentication you need to pass `username` and `password`. For `certificate` authentication you need to pass `appId`, `tenant`, `certificateBase64Encoded`, and `password` if specified.",
-        "default": ""
-      },
-      "username": {
-        "$id": "#/properties/username",
-        "type": "string",
-        "title": "username",
-        "description": "When using `password` authentication, you need to pass the `username` and `password`.",
+        "description": "When using `certificate` authentication, you can optionally pass the password for the PFX certificate file.",
         "default": ""
       },
       "appId": {
