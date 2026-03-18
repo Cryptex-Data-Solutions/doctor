@@ -147,13 +147,6 @@
         "description": "Continue when an error occurs during the publishing process.",
         "default": false
       },
-      "commandName": {
-        "$id": "#/properties/commandName",
-        "type": "string",
-        "title": "commandName",
-        "description": "In case you want to use the locally installed CLI for Microsoft 365, you can use this flag. By default, it uses the version specified in the doctor tool.",
-        "default": "localm365"
-      },
       "skipExistingPages": {
         "$id": "#/properties/skipExistingPages",
         "type": "boolean",

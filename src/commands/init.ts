@@ -15,8 +15,10 @@ export class Init {
   Paragraph`;
 
   /**
-   * Starts the project creation process
-   * @param options
+   * Initializes a Doctor project in the current working context.
+   * Creates the start folder, default index page, and doctor config file when missing.
+   * @param options Command options used to derive file paths and initial config values.
+   * @returns A promise that resolves when initialization steps are complete.
    */
   public static async start(options: CommandArguments) {
     const { startFolder } = options;

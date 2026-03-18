@@ -1,13 +1,38 @@
 import { join } from "path";
 import { CommandArguments } from "@models";
 import {
-  ArgumentsHelper,
   CliCommand,
+  executeWithRetry,
   FileHelpers,
   FolderHelpers,
   Logger,
-  execScript,
 } from "@helpers";
+
+const getErrorMessage = (error: any): string => {
+  if (!error) {
+    return "Unknown error";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return error.message || JSON.stringify(error);
+};
+
+const isAuthOrPermissionError = (message: string): boolean => {
+  const normalized = (message || "").toLowerCase();
+
+  return (
+    normalized.includes("status code 401") ||
+    normalized.includes("status code 403") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("forbidden") ||
+    normalized.includes("access denied") ||
+    normalized.includes("not authorized") ||
+    normalized.includes("insufficient")
+  );
+};
 
 export class SiteHelpers {
   /**
@@ -29,62 +54,104 @@ export class SiteHelpers {
     if (siteDesign.theme) {
       try {
         // Try to enable a custom theme
-        await execScript(
-          ArgumentsHelper.parse(
-            `spo theme apply --webUrl "${webUrl}" --name "${siteDesign.theme}"`
-          ),
-          false
+        await executeWithRetry(
+          "spo theme apply",
+          {
+            webUrl,
+            name: siteDesign.theme,
+          },
+          CliCommand.getRetry()
         );
       } catch (e) {
         Logger.debug(
           `It seems that the "${siteDesign.theme}" is not a custom theme. Doctor will try to enable it as a known SharePoint theme.`
         );
         // Try to enable a known SharePoint theme
-        await execScript(
-          ArgumentsHelper.parse(
-            `spo theme apply --webUrl "${webUrl}" --name "${siteDesign.theme}" --sharePointTheme`
-          ),
-          false
-        );
+        try {
+          await executeWithRetry(
+            "spo theme apply",
+            {
+              webUrl,
+              name: siteDesign.theme,
+              sharePointTheme: true,
+            },
+            CliCommand.getRetry()
+          );
+        } catch (themeError) {
+          const themeErrorMessage = getErrorMessage(themeError);
+
+          if (isAuthOrPermissionError(themeErrorMessage)) {
+            Logger.debug(
+              `Theme application skipped due to insufficient permissions: ${themeErrorMessage}`
+            );
+            Logger.debug(
+              `Continuing without applying theme \"${siteDesign.theme}\".`
+            );
+          } else {
+            return Promise.reject(
+              new Error(
+                `Something failed while applying the site theme "${siteDesign.theme}". ${getErrorMessage(
+                  themeError
+                )}`
+              )
+            );
+          }
+        }
       }
     }
 
     if (siteDesign.chrome) {
-      let cmdChrome = `spo site chrome set --url "${webUrl}"`;
+      const chromeOptions: any = {
+        siteUrl: webUrl,
+      };
 
       if (siteDesign.chrome.disableFooter) {
-        cmdChrome = `${cmdChrome} --disableFooter`;
+        chromeOptions.disableFooter = true;
       }
 
       if (siteDesign.chrome.disableMegaMenu) {
-        cmdChrome = `${cmdChrome} --disableMegaMenu`;
+        chromeOptions.disableMegaMenu = true;
       }
 
       if (siteDesign.chrome.hideTitleInHeader) {
-        cmdChrome = `${cmdChrome} --hideTitleInHeader`;
+        chromeOptions.hideTitleInHeader = true;
       }
 
       if (siteDesign.chrome.footerEmphasis) {
-        cmdChrome = `${cmdChrome} --footerEmphasis "${siteDesign.chrome.footerEmphasis}`;
+        chromeOptions.footerEmphasis = siteDesign.chrome.footerEmphasis;
       }
 
       if (siteDesign.chrome.footerLayout) {
-        cmdChrome = `${cmdChrome} --footerLayout "${siteDesign.chrome.footerLayout}"`;
+        chromeOptions.footerLayout = siteDesign.chrome.footerLayout;
       }
 
       if (siteDesign.chrome.headerEmphasis) {
-        cmdChrome = `${cmdChrome} --headerEmphasis "${siteDesign.chrome.headerEmphasis}"`;
+        chromeOptions.headerEmphasis = siteDesign.chrome.headerEmphasis;
       }
 
       if (siteDesign.chrome.headerLayout) {
-        cmdChrome = `${cmdChrome} --headerLayout "${siteDesign.chrome.headerLayout}"`;
+        chromeOptions.headerLayout = siteDesign.chrome.headerLayout;
       }
 
       if (siteDesign.chrome.logoAlignment) {
-        cmdChrome = `${cmdChrome} --logoAlignment "${siteDesign.chrome.logoAlignment}"`;
+        chromeOptions.logoAlignment = siteDesign.chrome.logoAlignment;
       }
 
-      await execScript(ArgumentsHelper.parse(cmdChrome), CliCommand.getRetry());
+      try {
+        await executeWithRetry(
+          "spo site chrome set",
+          chromeOptions,
+          CliCommand.getRetry()
+        );
+      } catch (e) {
+        return Promise.reject(
+          new Error(
+            `Something failed while setting site chrome options. ${getErrorMessage(
+              e
+            )}`
+          )
+        );
+      }
     }
 
     if (typeof siteDesign.logo !== "undefined") {
@@ -109,16 +176,18 @@ export class SiteHelpers {
           );
         }
 
-        await execScript(
-          ArgumentsHelper.parse(
-            `spo site set --url "${webUrl}" --siteLogoUrl "${imgUrl}"`
-          ),
+        await executeWithRetry(
+          "spo site set",
+          {
+            url: webUrl,
+            siteLogoUrl: imgUrl,
+          },
           CliCommand.getRetry()
         );
       } catch (e) {
         return Promise.reject(
           new Error(
-            `Something failed while setting the site logo. ${e.message}`
+            `Something failed while setting the site logo. ${getErrorMessage(e)}`
           )
         );
       }

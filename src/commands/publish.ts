@@ -1,5 +1,5 @@
-import Listr = require("listr");
-import kleur = require("kleur");
+import Listr from "listr";
+import kleur from "kleur";
 import { Authenticate } from "@commands";
 import {
   DoctorTranspiler,
@@ -17,8 +17,10 @@ import { existsAsync } from "@utils";
 
 export class Publish {
   /**
-   * Publishes the markdown files to SharePoint
-   * @param options
+   * Publishes markdown content and assets to SharePoint using the configured
+   * processing pipeline (cleanup, transpile, navigation, design, and post-cleanup).
+   * @param options Command options that control authentication, source paths, and publish behavior.
+   * @returns A promise that resolves when the publish pipeline completes.
    */
   public static async start(options: CommandArguments) {
     Logger.debug(
@@ -27,6 +29,14 @@ export class Publish {
         [options.password, options.certificateBase64Encoded]
       )}`
     );
+
+    console.log("Running the publish command");
+    // console.log(
+    //   Logger.mask(
+    //     JSON.stringify(options, null, 2),
+    //     [options.password, options.certificateBase64Encoded]
+    //   )
+    // );
 
     if (!(await existsAsync(options.startFolder))) {
       return Promise.reject(
@@ -43,6 +53,12 @@ export class Publish {
     }
 
     const { startFolder, webUrl } = options;
+
+    // console.log("Starting the publishing process with the following configuration:");
+    // console.log({
+    //   startFolder,
+    //   webUrl
+    // });
 
     let ouput: PublishOutput = {
       navigation: options.menu ? { ...options.menu } : null,
@@ -63,7 +79,7 @@ export class Publish {
       {
         title: `Multilingual site configuration`,
         task: async (ctx: any) => await MultilingualHelper.start(ctx, options),
-        enabled: () => !!options.multilingual,
+        enabled: () => !!options.multilingual.enableTranslations,
       },
       {
         title: `Fetch all markdown files`,
@@ -93,7 +109,9 @@ export class Publish {
         task: async (ctx: any) => await Cleanup.start(ctx, options),
         enabled: () => options.cleanEnd && options.confirm,
       },
-    ])
+    ], {
+      renderer: options.debug ? "verbose" : "default",
+    })
       .run()
       .catch((err) => {
         console.log("");

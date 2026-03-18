@@ -5,7 +5,7 @@ lastmod: 2021-03-10T14:24:35.121Z
 weight: 4
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 Options are specified via command arguments, or within a `doctor.json` file (automatically gets created on initialization `doctor init`).
@@ -46,11 +46,6 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 `--continueOnError`
 : Continue when an error occurs during the publishing process.
 
-`--disableTracking`
-: In order to make `doctor` better, we need to know how it is used. That is why we started to track which commands and related parameters are used. We are not tracking the values of these parameters, only if they are used or not. Still if you want to opt-out, you can do this by specifying the disable tracking flag.
-
-> **Important**: This flag can only be added to the command execution. Using it in the `doctor.json` fill will be ignored.
->
 ## Publish command specific options
 
 `--outputFolder <outputFolder>`
@@ -74,7 +69,7 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 > **Important**: This flag can only be added to the command execution. Using it in the `doctor.json` fill will be ignored.
 
 `--commandName <commandName>`
-: In case you want to use the locally installed `CLI for Microsoft 365`, you can use this flag. By default, it uses the version specified in the `doctor` tool. You can use the a locally installed version as follows: `--commandName m365`.
+: Override the command used to execute `CLI for Microsoft 365`. By default, `doctor` executes commands through the bundled `@pnp/cli-microsoft365` API directly. Use this option only when you explicitly want to run a different command binary.
 
 `--skipExistingPages`
 : Will not overwrite pages if they already existed on the site.
@@ -144,7 +139,7 @@ Manual translation example:
     ],
     "overwriteTranslationsOnChange": true,
     "translator:" null
-  } 
+  }
 }
 ```
 
@@ -163,7 +158,7 @@ Machine translation example:
       "endpoint": "https://api.cognitive.microsofttranslator.com/",
       "region": "<region name, example: westeurope>"
     }
-  } 
+  }
 }
 ```
 
@@ -236,11 +231,13 @@ You can also define a static navigation structure in the `doctor.json` file. Exa
 {
   "menu": {
     "QuickLaunch": {
-      "items": [{
-        "id": "documentation",
-        "name": "Documentation",
-        "url": ""
-      }]
+      "items": [
+        {
+          "id": "documentation",
+          "name": "Documentation",
+          "url": ""
+        }
+      ]
     }
   }
 }

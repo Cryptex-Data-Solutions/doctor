@@ -1,7 +1,7 @@
 import { CheerioAPI, load } from "cheerio";
-import type { Element } from "domhandler";
-import * as matter from "gray-matter";
-import * as MarkdownIt from "markdown-it";
+import { Element } from "domhandler";
+import matter from "gray-matter";
+import MarkdownIt from "markdown-it";
 import {
   CommandArguments,
   PublishOutput,
@@ -33,17 +33,24 @@ export class DoctorTranspiler {
   public static async processMDFiles(
     ctx: any,
     options: CommandArguments,
-    output: PublishOutput
+    output: PublishOutput,
   ): Promise<Observable<string>> {
     const { webUrl } = options;
+
+    Logger.debug("Starting processing the markdown files...");
+    Logger.debug(`Web URL: ${webUrl}`);
 
     return new Observable((observer) => {
       (async () => {
         const { files } = ctx;
 
+        Logger.debug(`Number of markdown files found: ${files.length}`);
+
         await PagesHelper.getAllPages(webUrl);
 
         for (const file of files) {
+          Logger.debug(`Processing file: ${file}`);
+
           try {
             await this.processFile(file, observer, options, output);
           } catch (e) {
@@ -74,7 +81,7 @@ export class DoctorTranspiler {
     observer: Subscriber<string>,
     options: CommandArguments,
     output: PublishOutput,
-    languagePageSlug: string = null
+    languagePageSlug: string = null,
   ) {
     const { webUrl, webPartTitle, skipExistingPages, disableComments } =
       options;
@@ -82,6 +89,10 @@ export class DoctorTranspiler {
     if (file.endsWith(".md")) {
       const filename = basename(file);
       observer.next(`Started processing: ${filename}`);
+
+      // if (file.includes('..') || path.isAbsolute(file)) {
+      //   throw new Error(`Invalid file path`);
+      // }
 
       let contents = await readFileAsync(file, { encoding: "utf-8" });
       if (contents) {
@@ -101,7 +112,10 @@ export class DoctorTranspiler {
           : this.converter.render(contents);
 
         const $ = load(htmlMarkup, {
-          xmlMode: true,
+          xml: {
+            xmlMode: true,
+            decodeEntities: false,
+          },
         });
         const imgElms = $(`img`).toArray();
         const anchorElms = $(`a`).toArray();
@@ -122,7 +136,7 @@ export class DoctorTranspiler {
           FrontMatterHelper.getSlug(
             markup.data as PageFrontMatter,
             options.startFolder,
-            file
+            file,
           );
 
         // Check if comments are disabled on global level, or overwrite it from page level
@@ -131,7 +145,7 @@ export class DoctorTranspiler {
             ? !markup.data.comments
             : disableComments;
         Logger.debug(
-          `Page comments ${disablePageComments ? "disabled" : "enabled"}`
+          `Page comments ${disablePageComments ? "disabled" : "enabled"}`,
         );
 
         // Image processing
@@ -144,7 +158,7 @@ export class DoctorTranspiler {
             file,
             markup.content,
             options,
-            output
+            output,
           );
         }
 
@@ -160,7 +174,7 @@ export class DoctorTranspiler {
               anchorElms,
               file,
               markup.content,
-              options
+              options,
             );
           } catch (e) {
             throw e.message;
@@ -172,7 +186,7 @@ export class DoctorTranspiler {
           const { outputFolder, startFolder } = options;
           const processedFilePath = file.replace(
             startFolder,
-            join(process.cwd(), outputFolder)
+            join(process.cwd(), outputFolder),
           );
           const dirPath = dirname(processedFilePath);
           await mkdirAsync(dirPath, { recursive: true });
@@ -183,7 +197,7 @@ export class DoctorTranspiler {
 
         if (markup && markup.content) {
           observer.next(
-            `Creating or updating the page in SharePoint for ${filename}`
+            `Creating or updating the page in SharePoint for ${filename}`,
           );
 
           // Check if the page already exists
@@ -195,11 +209,11 @@ export class DoctorTranspiler {
             disablePageComments,
             description,
             template || options.pageTemplate,
-            skipExistingPages && !languagePageSlug
+            skipExistingPages && !languagePageSlug,
           );
 
           Logger.debug(
-            `Page existed: ${existed} - Skipping existing pages: ${skipExistingPages}`
+            `Page existed: ${existed} - Skipping existing pages: ${skipExistingPages}`,
           );
 
           if (
@@ -207,26 +221,16 @@ export class DoctorTranspiler {
             (existed && !skipExistingPages) ||
             (existed && languagePageSlug)
           ) {
-            // Check if the header of the page needs to be changed
-            await HeaderHelper.set(
-              file,
-              webUrl,
-              slug,
-              header,
-              options,
-              !!(template || options.pageTemplate)
-            );
-
             // Retrieving all the controls from the page, so that we can start replacing the
             const controlData: string = await PagesHelper.getPageControls(
               webUrl,
-              slug
+              slug,
             );
             if (controlData) {
               const webparts: Control[] = JSON.parse(controlData);
               const markdownWp: Control = webparts.find(
                 (c: Control) =>
-                  c.webPartData && c.webPartData.title === webPartTitle
+                  c.webPartData && c.webPartData.title === webPartTitle,
               );
               await PagesHelper.insertOrCreateControl(
                 webPartTitle,
@@ -236,9 +240,20 @@ export class DoctorTranspiler {
                 options,
                 markdownWp ? markdownWp.id : null,
                 options.markdown,
-                file.endsWith(`.machinetranslated.md`)
+                file.endsWith(`.machinetranslated.md`),
               );
             }
+
+            // Apply the page header after the page has content, because the CLI header command
+            // fails on pages with uninitialized CanvasContent1/LayoutWebpartsContent.
+            await HeaderHelper.set(
+              file,
+              webUrl,
+              slug,
+              header,
+              options,
+              !!(template || options.pageTemplate),
+            );
 
             // Check if metadata needs to be added to the page
             if (metadata) {
@@ -273,8 +288,8 @@ export class DoctorTranspiler {
         ) {
           Logger.debug(
             `Adding item to the navigation: ${slug} - ${title} - ${JSON.stringify(
-              markup.data.menu
-            )} `
+              markup.data.menu,
+            )} `,
           );
 
           output.navigation = NavigationHelper.hierarchy(
@@ -282,7 +297,7 @@ export class DoctorTranspiler {
             output.navigation,
             markup.data.menu,
             slug,
-            title
+            title,
           );
         }
 
@@ -301,7 +316,7 @@ export class DoctorTranspiler {
             slug,
             options,
             observer,
-            output
+            output,
           );
         }
       }
@@ -323,7 +338,7 @@ export class DoctorTranspiler {
     filePath: string,
     contents: string,
     options: CommandArguments,
-    output: PublishOutput
+    output: PublishOutput,
   ) {
     const { startFolder, assetLibrary, webUrl, overwriteImages } = options;
 
@@ -353,15 +368,15 @@ export class DoctorTranspiler {
           crntFolder,
           imgPath,
           webUrl,
-          overwriteImages
+          overwriteImages,
         );
         contents = contents.replace(new RegExp(imgSource, "g"), imgUrl);
         StatusHelper.addImage();
       } catch (e) {
         return Promise.reject(
           new Error(
-            `Something failed while uploading the image asset. ${e.message}`
-          )
+            `Something failed while uploading the image asset. ${e.message}`,
+          ),
         );
       }
     }
@@ -382,12 +397,12 @@ export class DoctorTranspiler {
     linkElms: Element[],
     filePath: string,
     content: string,
-    options: CommandArguments
+    options: CommandArguments,
   ): Promise<string> {
     const { webUrl, startFolder } = options;
 
     const fLinks = linkElms.filter(
-      (i) => !$(i).attr("href").startsWith(`http`)
+      (i) => !$(i).attr("href").startsWith(`http`),
     );
     const uLinks = [...new Set(fLinks)];
 
@@ -428,7 +443,7 @@ export class DoctorTranspiler {
         const slug = FrontMatterHelper.getSlug(
           mdData.data as PageFrontMatter,
           startFolder,
-          mdFilePath
+          mdFilePath,
         );
         const spUrl = `${webUrl}${
           webUrl.endsWith("/") ? "" : "/"

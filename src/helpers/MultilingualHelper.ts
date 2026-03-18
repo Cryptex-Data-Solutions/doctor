@@ -1,12 +1,12 @@
 import { dirname, join, parse } from "path";
-import * as matter from "gray-matter";
+import matter from "gray-matter";
 import {
   ApiHelper,
   AccessToken,
   Contextinfo,
   Translator,
   MarkdownHelper,
-} from ".";
+} from "./index.js";
 import {
   Item,
   PageTranslations,
@@ -16,10 +16,10 @@ import {
   PageLocalizationCreation,
   PublishOutput,
 } from "@models";
-import { Logger } from "./logger";
-import { DoctorTranspiler } from "./DoctorTranspiler";
+import { Logger } from "./logger.js";
+import { DoctorTranspiler } from "./DoctorTranspiler.js";
 import { Subscriber } from "rxjs";
-import { TempDataHelper } from "./TempDataHelper";
+import { TempDataHelper } from "./TempDataHelper.js";
 import { existsAsync, readFileAsync } from "@utils";
 
 const FEATURE_ID = "24611c05-ee19-45da-955f-6602264abaf8";
@@ -36,6 +36,12 @@ export class MultilingualHelper {
   ): Promise<void> {
     const { webUrl, multilingual } = options;
     const url = webUrl.endsWith("/") ? webUrl : `${webUrl}/`;
+
+    // console.log(`Processing multilingual settings for the site...`, {
+    //   webUrl,
+    //   url,
+    //   multilingual
+    // });
 
     if (!multilingual) {
       return;
@@ -57,6 +63,8 @@ export class MultilingualHelper {
         Authorization: `Bearer ${token.trim()}`,
       }
     );
+
+    console.log(`Multilingual feature is currently ${isEnabled ? "enabled" : "disabled"}.`);
 
     if (multilingual.enableTranslations) {
       // When the feature is enabled, the DefinitionId is returned

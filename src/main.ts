@@ -1,4 +1,4 @@
-import * as kleur from "kleur";
+import kleur from "kleur";
 import { Command, Init, Publish, Version } from "@commands";
 import { CommandArguments } from "@models";
 import {
@@ -6,14 +6,15 @@ import {
   Logger,
   ShortcodesHelpers,
   StatusHelper,
-  TelemetryHelper,
 } from "@helpers";
-import { autocomplete } from "./autocomplete";
+import { autocomplete } from "./autocomplete.js";
 
 export class Commands {
   /**
-   * Starts the command processing
-   * @param options
+  * Dispatches the selected command and handles shared runtime initialization,
+  * logging, shortcode setup, and execution timing output.
+  * @param options Parsed command options used to determine which command to run.
+  * @returns A promise that resolves when the selected command flow completes.
    */
   public static async start(options: CommandArguments) {
     if (options) {
@@ -24,7 +25,6 @@ export class Commands {
 
       Logger.init(options.debug);
       CliCommand.init(options);
-      TelemetryHelper.trackTask(options);
       StatusHelper.getInstance();
 
       console.log("");
@@ -43,6 +43,8 @@ export class Commands {
           );
 
           await ShortcodesHelpers.init(options.shortcodesFolder);
+
+          // console.log("Parsed shortcodes");
         }
 
         await Publish.start(options);

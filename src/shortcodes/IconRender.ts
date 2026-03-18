@@ -1,7 +1,10 @@
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { ShortcodeRender } from "@models";
 import { Logger } from "@helpers";
 import { existsAsync, readFileAsync } from "@utils";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const IconRenderer: ShortcodeRender = {
   render: async function (

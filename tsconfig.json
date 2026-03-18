@@ -3,8 +3,10 @@
     "baseUrl": ".",
     "target": "es6",
     "forceConsistentCasingInFileNames": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "sourceMap": true,
     "experimentalDecorators": true,
@@ -18,14 +20,22 @@
       "ES2015"
     ],
     "paths": {
-      "@commands": ["src/commands"],
-      "@helpers": ["src/helpers"],
-      "@models": ["src/models"],
-      "@utils": ["src/utils"]
+      "@commands": [
+        "src/commands/index.ts"
+      ],
+      "@helpers": [
+        "src/helpers/index.ts"
+      ],
+      "@models": [
+        "src/models/index.ts"
+      ],
+      "@utils": [
+        "src/utils/index.ts"
+      ]
     }
   },
   "include": [
-    "src/**/*.ts"   
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules"

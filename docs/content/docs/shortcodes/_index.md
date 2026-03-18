@@ -5,7 +5,7 @@ lastmod: 2021-02-22T10:06:07.167Z
 weight: 5
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 Shortcodes are HTML snippets inside your content files calling built-in or custom templates. You can use these shortcodes like custom HTML elements. Similar like custom web components.
@@ -29,9 +29,9 @@ You can add custom shortcodes to your project by adding a JavaScript file to the
 module.exports = {
   name: "shortcode-name",
   render: (attributes, html) => {
-    return `<div>Name: ${attributes.name} - HTML: ${html}</div>`
+    return `<div>Name: ${attributes.name} - HTML: ${html}</div>`;
   },
-  beforeMarkdown: false
+  beforeMarkdown: false,
 };
 ```
 
