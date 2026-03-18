@@ -27,7 +27,7 @@ export class ShortcodesHelpers {
 
     let files: string[] = [];
     if (await existsAsync(shortcodes)) {
-      files = await fg(`${shortcodes}/**/*.js`.replace(/\\/g, "/"));
+      files = await fg(`${shortcodes}/**/*.{js,cjs}`.replace(/\\/g, "/"));
     }
 
     Logger.debug(`Doctor found ${files.length} custom shortcodes`);
