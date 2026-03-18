@@ -18,12 +18,9 @@
   "scripts": {
     "start": "npm run build",
     "build": "npm run clean && tsc && tsc-alias",
+    "clean": "rm -rf dist",
     "watch": "node ./scripts/reset-debug.js && (tsc -w & tsc-alias -w)",
     "watch:debug": "node ./scripts/init-debug.js && (tsc -w & tsc-alias -w)",
-    "clean": "rm -rf dist mochawesome-report ./cypress/screenshots ./cypress/videos",
-    "test": "cypress open",
-    "test:e2e": "cypress open",
-    "test:e2e:run": "cypress run --browser edge",
     "docs": "cd docs && hogo serve",
     "prepare": "husky install"
   },

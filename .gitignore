@@ -8,8 +8,3 @@ mochawesome-report
 
 *.pem
 *.pfx
-cypress.json
-cypress/screenshots
-cypress/videos
-cypress/results
-cypress/reports

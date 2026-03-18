@@ -1,5 +1,5 @@
 export * from "./autocomplete.js";
-export * from "./cli.js";
+export * from "./cli.cjs";
 export * from "./commands/index.js";
 export * from "./helpers/index.js";
 export * from "./main.js";
