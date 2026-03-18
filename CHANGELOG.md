@@ -1,5 +1,15 @@
 # Changelog
+
+## [2.0.0]
+
+- New start for Doctor with Node.js >22 support.
+- Full refactoring to support the latest version of the CLI for Microsoft 365.
     
+## [1.12.1]
+
+
+- [#164](https://github.com/estruyf/doctor/issues/164): Fix dependencies
+
 ## [1.12.0]
 
 

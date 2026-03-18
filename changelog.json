@@ -1,20 +1,39 @@
-[{
+[
+  {
     "title": "template",
-    "updates": [{
-      "id": null,
-      "title": ""
-    }]
+    "updates": [
+      {
+        "id": null,
+        "title": ""
+      }
+    ]
+  },
+  {
+    "title": "2.0.0",
+    "updates": [
+      {
+        "id": null,
+        "title": "New start for Doctor with Node.js >22 support."
+      },
+      {
+        "id": null,
+        "title": "Full refactoring to support the latest version of the CLI for Microsoft 365."
+      }
+    ]
   },
   {
     "title": "1.12.1",
-    "updates": [{
-      "id": 164,
-      "title": "Fix dependencies"
-    }]
+    "updates": [
+      {
+        "id": 164,
+        "title": "Fix dependencies"
+      }
+    ]
   },
   {
     "title": "1.12.0",
-    "updates": [{
+    "updates": [
+      {
         "id": null,
         "title": "Updates to support Node.js >= 18"
       },
@@ -26,7 +45,8 @@
   },
   {
     "title": "1.11.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 89,
         "title": "[Enhancement]: Use Cognitive Service Translation API connection for machine translations"
       },
@@ -38,7 +58,8 @@
   },
   {
     "title": "1.10.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 82,
         "title": "[Enhancement]: Allow comments to be disabled at global level"
       },
@@ -62,7 +83,8 @@
   },
   {
     "title": "1.9.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 77,
         "title": "[Enhancement]: Add pages in alphabetical order to the navigation (when weight is not defined)"
       },
@@ -82,14 +104,17 @@
   },
   {
     "title": "1.8.1",
-    "updates": [{
-      "id": 78,
-      "title": "[BUG] Fix for fetching all list items via the library title"
-    }]
+    "updates": [
+      {
+        "id": 78,
+        "title": "[BUG] Fix for fetching all list items via the library title"
+      }
+    ]
   },
   {
     "title": "1.8.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 63,
         "title": "[Enhancement]: Get to know how doctor is used"
       },
@@ -129,7 +154,8 @@
   },
   {
     "title": "1.7.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 5,
         "title": "Documentation site created [getdoctor.io](https://getdoctor.io)."
       },
@@ -173,7 +199,8 @@
   },
   {
     "title": "1.6.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 3,
         "title": "Added metadata support for pages."
       },
@@ -201,7 +228,8 @@
   },
   {
     "title": "1.5.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 33,
         "title": "Page template support added."
       },
@@ -233,7 +261,8 @@
   },
   {
     "title": "1.4.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 17,
         "title": "Enhancement: Add support for page description."
       },
@@ -265,14 +294,17 @@
   },
   {
     "title": "1.3.1",
-    "updates": [{
-      "id": 28,
-      "title": "Fix for `cleanStart` when comfirm flag is not provided. Thanks to [Mark Heptinstall](https://github.com/mheptinstall)."
-    }]
+    "updates": [
+      {
+        "id": 28,
+        "title": "Fix for `cleanStart` when comfirm flag is not provided. Thanks to [Mark Heptinstall](https://github.com/mheptinstall)."
+      }
+    ]
   },
   {
     "title": "1.3.0",
-    "updates": [{
+    "updates": [
+      {
         "id": 7,
         "title": "Added parameter to clean up all pages and assets before publishing."
       },
@@ -296,14 +328,17 @@
   },
   {
     "title": "[1.2.1] 2020-12-18",
-    "updates": [{
-      "id": 16,
-      "title": "Fix for specified webPartData is not a valid JSON string."
-    }]
+    "updates": [
+      {
+        "id": 16,
+        "title": "Fix for specified webPartData is not a valid JSON string."
+      }
+    ]
   },
   {
     "title": "[1.2.0] 2020-12-18",
-    "updates": [{
+    "updates": [
+      {
         "id": 9,
         "title": "Removed the `jq` dependency with a fallback to JSON parsing in the tool itself."
       },
@@ -327,7 +362,8 @@
   },
   {
     "title": "[1.1.0] 2020-12-16",
-    "updates": [{
+    "updates": [
+      {
         "id": 2,
         "title": "Added support for linking pages in Markdown."
       },
@@ -339,16 +375,20 @@
   },
   {
     "title": "[1.0.1] 2020-12-15",
-    "updates": [{
-      "id": 1,
-      "title": "Fix for when `m365` tool is not globally available"
-    }]
+    "updates": [
+      {
+        "id": 1,
+        "title": "Fix for when `m365` tool is not globally available"
+      }
+    ]
   },
   {
     "title": "[1.0.0] 2020-12-15",
-    "updates": [{
-      "id": null,
-      "title": "Initial release"
-    }]
+    "updates": [
+      {
+        "id": null,
+        "title": "Initial release"
+      }
+    ]
   }
 ]

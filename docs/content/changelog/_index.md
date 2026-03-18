@@ -6,6 +6,11 @@ description: The changelog of Doctor
 type: docs-main
 ---
 
+## [1.12.1]
+
+
+- [#164](https://github.com/estruyf/doctor/issues/164): Fix dependencies
+
 ## [1.12.0]
 
 
