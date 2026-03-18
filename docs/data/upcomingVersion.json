@@ -1,1 +1,1 @@
-{"title":"1.12.1","updates":[{"id":164,"title":"Fix dependencies"}]}
+{"title":"2.0.0","updates":[{"id":null,"title":"New start for Doctor with Node.js >22 support."},{"id":null,"title":"Full refactoring to support the latest version of the CLI for Microsoft 365."}]}
