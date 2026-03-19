@@ -185,11 +185,20 @@ export class SiteHelpers {
           CliCommand.getRetry()
         );
       } catch (e) {
-        return Promise.reject(
-          new Error(
-            `Something failed while setting the site logo. ${getErrorMessage(e)}`
-          )
-        );
+        const logoErrorMessage = getErrorMessage(e);
+
+        if (isAuthOrPermissionError(logoErrorMessage)) {
+          Logger.debug(
+            `Site logo update skipped due to insufficient permissions: ${logoErrorMessage}`
+          );
+          Logger.debug(`Continuing without updating the site logo.`);
+        } else {
+          return Promise.reject(
+            new Error(
+              `Something failed while setting the site logo. ${logoErrorMessage}`
+            )
+          );
+        }
       }
     }
   }
