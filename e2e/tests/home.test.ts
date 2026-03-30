@@ -56,4 +56,10 @@ describe('Navigation', () => {
     expect(titles).toContain('Installation');
     expect(titles).toContain('Commands');
   });
+
+  it('should not contain default navigation items', () => {
+    const titles = nodes.map((n: any) => n.Title);
+    expect(titles).not.toContain('Documents');
+    expect(titles).not.toContain('Pages');
+  });
 });
