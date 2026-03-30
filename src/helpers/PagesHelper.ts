@@ -41,7 +41,7 @@ export class PagesHelper {
             Logger.debug((e as Error).message);
 
             if (!options.continueOnError) {
-              throw (e as Error).message;
+              throw e;
             }
           }
         }
