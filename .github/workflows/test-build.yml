@@ -2,15 +2,9 @@ name: Does it build?
 
 on:
   workflow_dispatch:
-    inputs:
-      name:
-        description: 'Why are you triggering me?'
-        required: false
-        default: 'Test run'
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
   build:
@@ -22,8 +16,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 22
-        registry-url: https://registry.npmjs.org/
 
-    - run: npm i
+    - run: npm ci
 
-    - run: npm start
+    - run: npm run build
