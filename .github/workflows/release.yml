@@ -8,9 +8,9 @@ on:
 
 jobs:
   ###################################
-  ### Build and publish per OS    ###
+  ### Build and publish - Bash    ###
   ###################################
-  publish:
+  publish_bash:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -20,20 +20,10 @@ jobs:
         include:
           - name: Ubuntu
             os: ubuntu-latest
-            shell: bash
             siteUrl: SITEURL_LINUX
           - name: macOS
             os: macos-latest
-            shell: bash
             siteUrl: SITEURL_MACOS
-          - name: Windows PowerShell
-            os: windows-latest
-            shell: pwsh
-            siteUrl: SITEURL_WINDOWS_POWERSHELL
-          - name: Windows CMD
-            os: windows-latest
-            shell: cmd
-            siteUrl: SITEURL_WINDOWS
 
     steps:
     - uses: actions/checkout@v4
@@ -45,29 +35,20 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.npm
-        key: ${{ matrix.os }}-${{ matrix.shell }}-${{ hashFiles('**/package-lock.json') }}
+        key: ${{ matrix.os }}-release-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.shell }}-
+          ${{ matrix.os }}-release-
 
     - run: npm ci
-      shell: ${{ matrix.shell }}
-
     - run: npm run build
-      shell: ${{ matrix.shell }}
-
     - run: npm link
-      shell: ${{ matrix.shell }}
 
-    - name: Clone doctor-sample
-      run: git clone https://github.com/estruyf/doctor-sample
-      shell: ${{ matrix.shell }}
+    - name: Clone and prepare sample
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
 
-    - name: Prepare sample config
-      run: node ./scripts/prepare-sample.js
-      shell: ${{ matrix.shell }}
-
-    - name: Publish via Doctor (bash)
-      if: matrix.shell == 'bash'
+    - name: Publish via Doctor
       run: |
         cd doctor-sample
         doctor publish \
@@ -82,10 +63,48 @@ jobs:
           --cleanQuickLaunch \
           --cleanEnd \
           --confirm
-      shell: bash
 
-    - name: Publish via Doctor (pwsh)
-      if: matrix.shell == 'pwsh'
+
+  ##########################################
+  ### Build and publish - PowerShell     ###
+  ##########################################
+  publish_pwsh:
+    name: Publish - Windows PowerShell
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Get npm cache directory
+      id: npm-cache
+      shell: pwsh
+      run: echo "dir=$(npm config get cache)" >> $env:GITHUB_OUTPUT
+
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: windows-pwsh-release-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          windows-pwsh-release-
+
+    - run: npm ci
+      shell: pwsh
+    - run: npm run build
+      shell: pwsh
+    - run: npm link
+      shell: pwsh
+
+    - name: Clone and prepare sample
+      shell: pwsh
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
+
+    - name: Publish via Doctor
+      shell: pwsh
       run: |
         cd doctor-sample
         doctor publish `
@@ -94,20 +113,58 @@ jobs:
           --tenant "${{ secrets.TENANT_ID }}" `
           --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" `
           --password `
-          -u "${{ secrets[matrix.siteUrl] }}" `
+          -u "${{ secrets.SITEURL_WINDOWS_POWERSHELL }}" `
           --retryWhenFailed `
           --cleanStart `
           --cleanQuickLaunch `
           --cleanEnd `
           --confirm
-      shell: pwsh
 
-    - name: Publish via Doctor (cmd)
-      if: matrix.shell == 'cmd'
+
+  ##########################################
+  ### Build and publish - CMD            ###
+  ##########################################
+  publish_cmd:
+    name: Publish - Windows CMD
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Get npm cache directory
+      id: npm-cache
+      shell: cmd
+      run: |
+        for /f "tokens=*" %%i in ('npm config get cache') do echo dir=%%i >> %GITHUB_OUTPUT%
+
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: windows-cmd-release-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          windows-cmd-release-
+
+    - run: npm ci
+      shell: cmd
+    - run: npm run build
+      shell: cmd
+    - run: npm link
+      shell: cmd
+
+    - name: Clone and prepare sample
+      shell: cmd
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
+
+    - name: Publish via Doctor
+      shell: cmd
       run: |
         cd doctor-sample
-        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password -u "${{ secrets[matrix.siteUrl] }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --confirm
-      shell: cmd
+        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --confirm
 
 
   ###################################
@@ -117,7 +174,7 @@ jobs:
     name: E2E - ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [publish]
+    needs: [publish_bash, publish_pwsh, publish_cmd]
 
     strategy:
       fail-fast: false
