@@ -9,9 +9,13 @@ mochawesome-report
 
 *.pem
 *.pfx
+*.crt
+*.key
+*.b64
 cypress.json
 cypress.env.json
 test-sample/
+doctor-sample/
 cypress/screenshots
 cypress/videos
 cypress/results

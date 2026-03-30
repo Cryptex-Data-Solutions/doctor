@@ -320,22 +320,22 @@ export class MarkdownHelper {
       .callout-caution { background-color: #ffaa44; color: #000; }
       .callout-danger { background-color: #d13438; color: #000; }
     
-      a.toc-anchor {
-        display: none;
+      .doctor__container a.toc-anchor {
+        display: none !important;
         text-decoration: none;
       }
 
-      a.toc-anchor:hover {
+      .doctor__container a.toc-anchor:hover {
         text-decoration: none;
       }
 
-      h1:hover a.toc-anchor,
-      h2:hover a.toc-anchor,
-      h3:hover a.toc-anchor,
-      h4:hover a.toc-anchor,
-      h5:hover a.toc-anchor,
-      h6:hover a.toc-anchor {
-        display: inline;
+      .doctor__container h1:hover a.toc-anchor,
+      .doctor__container h2:hover a.toc-anchor,
+      .doctor__container h3:hover a.toc-anchor,
+      .doctor__container h4:hover a.toc-anchor,
+      .doctor__container h5:hover a.toc-anchor,
+      .doctor__container h6:hover a.toc-anchor {
+        display: inline !important;
       }
     `;
   }
