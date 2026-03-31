@@ -62,6 +62,7 @@ jobs:
           --cleanStart \
           --cleanQuickLaunch \
           --cleanEnd \
+          --skipSiteDesign \
           --confirm
 
 
@@ -118,6 +119,7 @@ jobs:
           --cleanStart `
           --cleanQuickLaunch `
           --cleanEnd `
+          --skipSiteDesign `
           --confirm
 
 
@@ -164,7 +166,7 @@ jobs:
       shell: cmd
       run: |
         cd doctor-sample
-        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password "" -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --confirm
+        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password "" -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --skipSiteDesign --confirm
 
 
   ###################################
