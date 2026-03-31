@@ -3,6 +3,37 @@ import * as path from 'path';
 import * as cheerio from 'cheerio';
 
 const CLI = path.resolve(__dirname, '../../bin/localm365');
+const MAX_RETRIES = 3;
+const INITIAL_BACKOFF_MS = 2000;
+
+function sleep(ms: number): void {
+  execFileSync('node', ['-e', `setTimeout(()=>{},${ms})`], { timeout: ms + 5000 });
+}
+
+function execCli(args: string[]): string {
+  return execFileSync('node', [CLI, ...args], {
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+    timeout: 30000,
+  }).trim();
+}
+
+function execCliWithRetry(args: string[]): string {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return execCli(args);
+    } catch (e) {
+      lastError = e as Error;
+      if (attempt < MAX_RETRIES) {
+        const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log(`  Retry ${attempt + 1}/${MAX_RETRIES} after ${backoff}ms...`);
+        sleep(backoff);
+      }
+    }
+  }
+  throw lastError;
+}
 
 export interface PageData {
   title: string;
@@ -18,16 +49,8 @@ export interface NavigationNode {
   Children?: NavigationNode[];
 }
 
-function execCli(args: string[]): string {
-  return execFileSync('node', [CLI, ...args], {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-    timeout: 30000,
-  }).trim();
-}
-
 export function getPageData(webUrl: string, slug: string): PageData {
-  const raw = execCli(['spo', 'page', 'get', '--webUrl', webUrl, '--name', slug, '-o', 'json']);
+  const raw = execCliWithRetry(['spo', 'page', 'get', '--webUrl', webUrl, '--name', slug, '-o', 'json']);
   const data = JSON.parse(raw);
 
   let canvasHtml = '';
@@ -55,7 +78,7 @@ export function getPageData(webUrl: string, slug: string): PageData {
 
 export function pageExists(webUrl: string, slug: string): boolean {
   try {
-    execCli(['spo', 'page', 'get', '--webUrl', webUrl, '--name', slug, '-o', 'json']);
+    execCliWithRetry(['spo', 'page', 'get', '--webUrl', webUrl, '--name', slug, '-o', 'json']);
     return true;
   } catch {
     return false;
@@ -66,7 +89,7 @@ export function getNavigationNodes(
   webUrl: string,
   location: 'QuickLaunch' | 'TopNavigationBar'
 ): NavigationNode[] {
-  const raw = execCli([
+  const raw = execCliWithRetry([
     'request',
     '--url', `${webUrl}/_api/web/Navigation/${location}?$expand=Children,Children/Children`,
     '--accept', 'application/json;odata=nometadata',

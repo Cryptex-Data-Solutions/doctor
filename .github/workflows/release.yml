@@ -207,6 +207,9 @@ jobs:
 
     - run: npm ci
 
+    - name: Wait for SharePoint propagation
+      run: sleep 30
+
     - name: Run E2E tests
       run: npx vitest run --config e2e/vitest.config.ts
       env:
