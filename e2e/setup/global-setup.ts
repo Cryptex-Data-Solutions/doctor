@@ -40,6 +40,8 @@ export function setup() {
     );
   }
 
+  const certPassword = process.env.DOCTOR_E2E_CERTIFICATE_PASSWORD || '';
+
   console.log('Authenticating to M365...');
   execFileSync('node', [
     CLI,
@@ -48,7 +50,7 @@ export function setup() {
     '--appId', appId,
     '--tenant', tenantId,
     '--certificateBase64Encoded', certValue,
-    '--password',
+    '--password', certPassword,
   ], { stdio: 'pipe', timeout: 60000 });
   console.log('Authenticated.');
 }
