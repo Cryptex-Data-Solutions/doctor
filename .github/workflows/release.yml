@@ -170,13 +170,25 @@ jobs:
 
 
   ###################################
+  ### Wait for SharePoint to sync ###
+  ###################################
+  wait_for_propagation:
+    name: Wait for SharePoint propagation
+    runs-on: ubuntu-latest
+    needs: [publish_bash, publish_pwsh, publish_cmd]
+    steps:
+    - name: Wait 30s for SharePoint eventual consistency
+      run: sleep 30
+
+
+  ###################################
   ### E2E tests per published site ###
   ###################################
   e2e:
     name: E2E - ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [publish_bash, publish_pwsh, publish_cmd]
+    needs: [wait_for_propagation]
 
     strategy:
       fail-fast: false
