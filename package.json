@@ -21,7 +21,7 @@
     "test": "vitest run --config e2e/vitest.config.ts",
     "test:e2e": "vitest run --config e2e/vitest.config.ts",
     "docs": "cd docs && hogo serve",
-    "prepare": "husky"
+    "prepare": "(husky || true) && npm run build"
   },
   "keywords": [
     "cli",

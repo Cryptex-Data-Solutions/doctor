@@ -4,19 +4,19 @@
 .husky
 
 assets
-cypress
 docs
-mochawesome-report
+e2e
 node_modules
 schema
 scripts
 src
+doctor-sample
+test-sample
 
-#Files
+# Files
 .gitignore
 .gitmodules
 
 changelog.json
-cypress.json
-cypress.sample.json
 tsconfig.json
+MODERNIZATION.md
