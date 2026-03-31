@@ -1,5 +1,4 @@
 import { Logger } from './logger';
-import fetch from 'node-fetch';
 import { v4 as uuidv4 } from 'uuid';
 import { TranslationsResponse } from 'src/models';
 

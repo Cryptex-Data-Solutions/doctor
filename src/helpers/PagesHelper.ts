@@ -34,14 +34,14 @@ export class PagesHelper {
               observer.next(`Cleaning up page: ${slug}`);
               const filePath = `sitepages/${slug}`;
               const relUrl = FileHelpers.getRelUrl(webUrl, filePath);
-              await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${relUrl}" --confirm`), CliCommand.getRetry());
+              await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${relUrl}" --force`), CliCommand.getRetry());
             }
           } catch (e) {
             observer.error(e);
-            Logger.debug(e.message);
+            Logger.debug((e as Error).message);
 
             if (!options.continueOnError) {
-              throw e.message;
+              throw e;
             }
           }
         }
@@ -168,10 +168,12 @@ export class PagesHelper {
     
     if (wpId) {
       // Web part needs to be updated
-      await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --name "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
+      await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --pageName "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
     } else {
-      // Add new markdown web part
-      await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData}`), CliCommand.getRetry());
+      // Ensure a section exists before adding the web part (required by CLI v11+)
+      await execScript(ArgumentsHelper.parse(`spo page section add --webUrl "${webUrl}" --pageName "${slug}" --sectionTemplate OneColumn`), CliCommand.getRetry());
+      // Add new markdown web part to the newly created section
+      await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData} --section 1 --column 1`), CliCommand.getRetry());
     }
   }
 

@@ -2,15 +2,9 @@ name: Does it build?
 
 on:
   workflow_dispatch:
-    inputs:
-      name:
-        description: 'Why are you triggering me?'
-        required: false
-        default: 'Test run'
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
   build:
@@ -18,12 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 14
-        registry-url: https://registry.npmjs.org/
-  
-    - run: npm i
-      
-    - run: npm start
+        node-version: 22
+
+    - run: npm ci
+
+    - run: npm run build

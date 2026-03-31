@@ -60,7 +60,7 @@ export class FileHelpers {
     if (options.cleanStart) {
       try {
         const { webUrl } = options;
-        let filesData: File[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo file list --webUrl "${webUrl}" -f "${crntFolder}" -o json`), CliCommand.getRetry());
+        let filesData: File[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo file list --webUrl "${webUrl}" --folderUrl "${crntFolder}" -o json`), CliCommand.getRetry());
         if (filesData && typeof filesData === "string") {
           filesData = JSON.parse(filesData);
         }
@@ -70,7 +70,7 @@ export class FileHelpers {
         for (const file of filesData as File[]) {
           if (file && file.ServerRelativeUrl) {
             const filePath = `${crntFolder}${file.ServerRelativeUrl.toLowerCase().split(crntFolder).pop()}`;
-            await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${filePath}" --confirm`), CliCommand.getRetry());
+            await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${filePath}" --force`), CliCommand.getRetry());
           }
         }
 
@@ -84,11 +84,11 @@ export class FileHelpers {
         for (const folder of folderData as Folder[]) {
           if (folder && folder.Exists && folder.Name.toLowerCase() !== "forms" && folder.Name.toLowerCase() !== "templates") {
             const folderPath = `${crntFolder}${folder.ServerRelativeUrl.toLowerCase().split(crntFolder).pop()}`;
-            await execScript<string>(ArgumentsHelper.parse(`spo folder remove --webUrl "${webUrl}" --folderUrl "${folderPath}" --confirm`), CliCommand.getRetry());
+            await execScript<string>(ArgumentsHelper.parse(`spo folder remove --webUrl "${webUrl}" --url "${folderPath}" --force`), CliCommand.getRetry());
           }
         }
       } catch (e) {
-        throw e.message;
+        throw (e as Error).message;
       }
     }
   }
@@ -105,7 +105,7 @@ export class FileHelpers {
 
     const pageList = await ListHelpers.getSitePagesList(webUrl);
 
-    let filesData: File[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo listitem list --webUrl "${webUrl}" --id "${pageList.Id}" --fields "ID,Title,FileRef" -o json`), CliCommand.getRetry());
+    let filesData: File[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo listitem list --webUrl "${webUrl}" --listId "${pageList.Id}" --fields "ID,Title,FileRef" -o json`), CliCommand.getRetry());
     if (filesData && typeof filesData === "string") {
       filesData = JSON.parse(filesData);
     }
@@ -122,6 +122,6 @@ export class FileHelpers {
    */
   private static async upload(webUrl: string, crntFolder: string, imgPath: string) {
     Logger.debug(`Uploading file "${imgPath}" to ${crntFolder}"`);
-    await execScript(ArgumentsHelper.parse(`spo file add --webUrl "${webUrl}" --folder "${crntFolder}" --path "${imgPath}"`), CliCommand.getRetry());
+    await execScript(ArgumentsHelper.parse(`spo file add --webUrl "${webUrl}" --folder "${crntFolder}" --path "${imgPath}" --overwrite`), CliCommand.getRetry());
   }
 }

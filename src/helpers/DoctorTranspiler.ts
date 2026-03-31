@@ -29,10 +29,10 @@ export class DoctorTranspiler {
             await this.processFile(file, observer, options, output);
           } catch (e) {
             observer.error(e);
-            Logger.debug(e.message);
+            Logger.debug((e as Error).message);
 
             if (!options.continueOnError) {
-              throw e.message;
+              throw (e as Error).message;
             }
           }
         }
@@ -105,7 +105,7 @@ export class DoctorTranspiler {
           try {
             markup.content = this.processLinks($, anchorElms, file, markup.content, options);
           } catch (e) {
-            throw e.message;
+            throw (e as Error).message;
           }
         }
 
@@ -127,16 +127,16 @@ export class DoctorTranspiler {
           Logger.debug(`Page existed: ${existed} - Skipping existing pages: ${skipExistingPages}`);
 
           if (!existed || (existed && !skipExistingPages) || (existed && languagePageSlug)) {
-            // Check if the header of the page needs to be changed
-            await HeaderHelper.set(file, webUrl, slug, header, options, !!(template || options.pageTemplate));
-
-            // Retrieving all the controls from the page, so that we can start replacing the 
+            // Retrieving all the controls from the page, so that we can start replacing the
             const controlData: string = await PagesHelper.getPageControls(webUrl, slug);
             if (controlData) {
               const webparts: Control[] = JSON.parse(controlData);
               const markdownWp: Control = webparts.find((c: Control) => c.webPartData && c.webPartData.title === webPartTitle);
               await PagesHelper.insertOrCreateControl(webPartTitle, markup.content, slug, webUrl, markdownWp ? markdownWp.id : null, options.markdown, file.endsWith(`.machinetranslated.md`));
             }
+
+            // Set the page header after content is written (CLI v11 requires CanvasContent1 to be non-null)
+            await HeaderHelper.set(file, webUrl, slug, header, options, !!(template || options.pageTemplate));
 
             // Check if metadata needs to be added to the page
             if (metadata) {
@@ -209,7 +209,7 @@ export class DoctorTranspiler {
         contents = contents.replace(new RegExp(imgSource, 'g'), imgUrl);
         StatusHelper.addImage();
       } catch (e) {
-        return Promise.reject(new Error(`Something failed while uploading the image asset. ${e.message}`));
+        return Promise.reject(new Error(`Something failed while uploading the image asset. ${(e as Error).message}`));
       }
     }
 

@@ -22,7 +22,7 @@ export class FolderHelpers {
         
         if (this.checkedFolders.indexOf(folderToProcess) === -1) {
           try {
-            let scriptData: any = await execScript(ArgumentsHelper.parse(`spo folder get --webUrl "${webUrl}" --folderUrl "${folderToProcess}" -o json`), false);
+            let scriptData: any = await execScript(ArgumentsHelper.parse(`spo folder get --webUrl "${webUrl}" --url "${folderToProcess}" -o json`), false);
 
             if (scriptData && typeof scriptData === "string") {
               scriptData = JSON.parse(scriptData);

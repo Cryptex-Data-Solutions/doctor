@@ -201,7 +201,7 @@ export class OptionsHelper {
         confirm: options.confirm || answers.confirm
       };
     } catch (e) {
-      throw e.message;
+      throw (e as Error).message;
     }
   }
 }

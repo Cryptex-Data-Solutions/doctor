@@ -1,4 +1,3 @@
 #!/usr/bin/env node
 
-require = require('esm')(module /*, options*/);
-require('../node_modules/@pnp/cli-microsoft365/dist');
+import('../node_modules/@pnp/cli-microsoft365/dist/index.js').catch(console.error);

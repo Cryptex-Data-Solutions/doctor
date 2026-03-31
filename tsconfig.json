@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "target": "es6",
+    "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
     "module": "commonjs",
     "moduleResolution": "node",
@@ -15,7 +15,7 @@
     "noUnusedLocals": true,
     "lib": [
       "DOM",
-      "ES2015"
+      "ES2022"
     ]
   },
   "include": [

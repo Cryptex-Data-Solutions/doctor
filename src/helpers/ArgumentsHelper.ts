@@ -7,7 +7,12 @@ export class ArgumentsHelper {
    * @param command 
    */
   public static parse(command: string) {
-    const argsRegEx = /([^\s'"]([^\s'"]*(['"])([^\3]*?)\3)+[^\s'"]*)|[^\s'"]+|(['"])([^\5]*?)\5/gi;
-    return command.match(argsRegEx);
+    const args: string[] = [];
+    const argsRegEx = /(?:"[^"]*")|(?:'[^']*')|[^\s]+/g;
+    let match: RegExpExecArray | null;
+    while ((match = argsRegEx.exec(command)) !== null) {
+      args.push(match[0]);
+    }
+    return args;
   }
 }

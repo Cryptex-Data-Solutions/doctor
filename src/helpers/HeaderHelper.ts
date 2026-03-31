@@ -67,16 +67,16 @@ export class HeaderHelper {
         setPageHeader = `${setPageHeader} --textAlignment "${header.textAlignment}"`;
       }
       
-      if (header.showTopicHeader) {
-        setPageHeader = `${setPageHeader} --showTopicHeader`;
+      if (typeof header.showTopicHeader !== "undefined") {
+        setPageHeader = `${setPageHeader} --showTopicHeader "${header.showTopicHeader}"`;
       }
-      
+
       if (header.topicHeader) {
         setPageHeader = `${setPageHeader} --topicHeader "${header.topicHeader}"`;
       }
-      
-      if (header.showPublishDate) {
-        setPageHeader = `${setPageHeader} --showPublishDate`;
+
+      if (typeof header.showPublishDate !== "undefined") {
+        setPageHeader = `${setPageHeader} --showPublishDate "${header.showPublishDate}"`;
       }
       
       if (header.authors) {

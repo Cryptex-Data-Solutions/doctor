@@ -34,7 +34,7 @@ export class SiteHelpers {
     }
 
     if (siteDesign.chrome) {
-      let cmdChrome = `spo site chrome set --url "${webUrl}"`;
+      let cmdChrome = `spo site chrome set --siteUrl "${webUrl}"`;
 
       if (siteDesign.chrome.disableFooter) {
         cmdChrome = `${cmdChrome} --disableFooter`;
@@ -88,7 +88,7 @@ export class SiteHelpers {
         
         await execScript(ArgumentsHelper.parse(`spo site set --url "${webUrl}" --siteLogoUrl "${imgUrl}"`), CliCommand.getRetry());
       } catch (e) {
-        return Promise.reject(new Error(`Something failed while setting the site logo. ${e.message}`));
+        return Promise.reject(new Error(`Something failed while setting the site logo. ${(e as Error).message}`));
       }
     }
   }
