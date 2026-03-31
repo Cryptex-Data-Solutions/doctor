@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "npm run build",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && echo \"TypeScript version:\" && npx tsc --version && echo \"TypeScript path:\" && which tsc || true && tsc",
     "watch": "node ./scripts/reset-debug.js && tsc -w",
     "watch:debug": "node ./scripts/init-debug.js && tsc -w",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
