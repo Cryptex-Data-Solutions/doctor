@@ -3,8 +3,8 @@ import * as path from 'path';
 import * as cheerio from 'cheerio';
 
 const CLI = path.resolve(__dirname, '../../bin/localm365');
-const MAX_RETRIES = 3;
-const INITIAL_BACKOFF_MS = 2000;
+const MAX_RETRIES = 5;
+const INITIAL_BACKOFF_MS = 5000;
 
 function sleep(ms: number): void {
   execFileSync('node', ['-e', `setTimeout(()=>{},${ms})`], { timeout: ms + 5000 });
@@ -26,7 +26,9 @@ function execCliWithRetry(args: string[]): string {
     } catch (e) {
       lastError = e as Error;
       if (attempt < MAX_RETRIES) {
-        const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        const base = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        const jitter = Math.floor(Math.random() * base * 0.5);
+        const backoff = base + jitter;
         console.log(`  Retry ${attempt + 1}/${MAX_RETRIES} after ${backoff}ms...`);
         sleep(backoff);
       }
