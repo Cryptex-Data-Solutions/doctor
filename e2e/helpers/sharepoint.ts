@@ -10,11 +10,12 @@ function sleep(ms: number): void {
   execFileSync('node', ['-e', `setTimeout(()=>{},${ms})`], { timeout: ms + 5000 });
 }
 
-function execCli(args: string[]): string {
-  return execFileSync('node', [CLI, ...args], {
+function execCli(args: string[], verbose = false): string {
+  const fullArgs = verbose ? [...args, '--verbose'] : args;
+  return execFileSync('node', [CLI, ...fullArgs], {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
-    timeout: 30000,
+    timeout: 60000,
   }).trim();
 }
 
@@ -22,14 +23,18 @@ function execCliWithRetry(args: string[]): string {
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      return execCli(args);
-    } catch (e) {
-      lastError = e as Error;
+      // Use verbose on retries to capture more error detail
+      return execCli(args, attempt > 0);
+    } catch (e: any) {
+      const stderr = e.stderr?.toString?.() || '';
+      const stdout = e.stdout?.toString?.() || '';
+      const detail = stderr || stdout || e.message || 'Unknown error';
+      lastError = new Error(`CLI failed (attempt ${attempt + 1}): ${detail.trim()}`);
       if (attempt < MAX_RETRIES) {
         const base = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
         const jitter = Math.floor(Math.random() * base * 0.5);
         const backoff = base + jitter;
-        console.log(`  Retry ${attempt + 1}/${MAX_RETRIES} after ${backoff}ms...`);
+        console.log(`  Retry ${attempt + 1}/${MAX_RETRIES} after ${backoff}ms: ${detail.trim().substring(0, 200)}`);
         sleep(backoff);
       }
     }
