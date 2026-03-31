@@ -276,6 +276,10 @@ export class MarkdownHelper {
 
   private static getShortcodeStyles() {
     return `
+      html {
+        scroll-behavior: smooth;
+      }
+
       .doctor__container {
         position: relative;
       }
