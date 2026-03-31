@@ -58,9 +58,10 @@ export class FileHelpers {
    */
   public static async cleanUp(options: CommandArguments, crntFolder: string) {
     if (options.cleanStart) {
+      const { webUrl } = options;
+
       try {
-        const { webUrl } = options;
-        let filesData: File[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo file list --webUrl "${webUrl}" --folderUrl "${crntFolder}" -o json`), CliCommand.getRetry());
+        let filesData: File[] | string = await execScript<string>(ArgumentsHelper.parse(`spo file list --webUrl "${webUrl}" --folderUrl "${crntFolder}" -o json`), CliCommand.getRetry());
         if (filesData && typeof filesData === "string") {
           filesData = JSON.parse(filesData);
         }
@@ -73,14 +74,18 @@ export class FileHelpers {
             await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${filePath}" --force`), CliCommand.getRetry());
           }
         }
+      } catch (e) {
+        Logger.debug(`Clean up files skipped: ${(e as Error).message}`);
+      }
 
-        let folderData: Folder[] | string =  await execScript<string>(ArgumentsHelper.parse(`spo folder list --webUrl "${webUrl}" --parentFolderUrl "${crntFolder}" -o json`), CliCommand.getRetry());
+      try {
+        let folderData: Folder[] | string = await execScript<string>(ArgumentsHelper.parse(`spo folder list --webUrl "${webUrl}" --parentFolderUrl "${crntFolder}" -o json`), CliCommand.getRetry());
         if (folderData && typeof folderData === "string") {
           folderData = JSON.parse(folderData);
         }
 
         Logger.debug(`Folders to be removed: ${JSON.stringify(folderData)}`);
-        
+
         for (const folder of folderData as Folder[]) {
           if (folder && folder.Exists && folder.Name.toLowerCase() !== "forms" && folder.Name.toLowerCase() !== "templates") {
             const folderPath = `${crntFolder}${folder.ServerRelativeUrl.toLowerCase().split(crntFolder).pop()}`;
@@ -88,7 +93,7 @@ export class FileHelpers {
           }
         }
       } catch (e) {
-        throw (e as Error).message;
+        Logger.debug(`Clean up folders skipped: ${(e as Error).message}`);
       }
     }
   }
