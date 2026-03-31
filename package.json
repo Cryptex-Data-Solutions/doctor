@@ -14,9 +14,9 @@
   },
   "scripts": {
     "start": "npm run build",
-    "build": "npm run clean && echo \"TypeScript version:\" && npx -p typescript@~5.5.0 tsc --version && npx -p typescript@~5.5.0 tsc",
-    "watch": "node ./scripts/reset-debug.js && npx -p typescript@~5.5.0 tsc -w",
-    "watch:debug": "node ./scripts/init-debug.js && npx -p typescript@~5.5.0 tsc -w",
+    "build": "npm run clean && tsc",
+    "watch": "node ./scripts/reset-debug.js && tsc -w",
+    "watch:debug": "node ./scripts/init-debug.js && tsc -w",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "vitest run --config e2e/vitest.config.ts",
     "test:e2e": "vitest run --config e2e/vitest.config.ts",
@@ -75,6 +75,7 @@
     "@types/omelette": "0.4.1",
     "husky": "^9.0.0",
     "tslib": "2.0.3",
+    "typescript": "~5.5.0",
     "vitest": "^4.1.2"
   },
   "dependencies": {
@@ -99,7 +100,6 @@
     "mime": "2.5.2",
     "omelette": "0.4.15",
     "rxjs": "^7.8.0",
-    "typescript": "~5.5.0",
     "uuid": "^9.0.0"
   }
 }
