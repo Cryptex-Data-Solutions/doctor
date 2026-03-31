@@ -56,7 +56,7 @@ jobs:
           --appId "${{ secrets.APP_ID }}" \
           --tenant "${{ secrets.TENANT_ID }}" \
           --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" \
-          --password \
+          --password "" \
           -u "${{ secrets[matrix.siteUrl] }}" \
           --retryWhenFailed \
           --cleanStart \
@@ -112,7 +112,7 @@ jobs:
           --appId "${{ secrets.APP_ID }}" `
           --tenant "${{ secrets.TENANT_ID }}" `
           --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" `
-          --password `
+          --password "" `
           -u "${{ secrets.SITEURL_WINDOWS_POWERSHELL }}" `
           --retryWhenFailed `
           --cleanStart `
@@ -164,7 +164,7 @@ jobs:
       shell: cmd
       run: |
         cd doctor-sample
-        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --confirm
+        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password "" -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --confirm
 
 
   ###################################
