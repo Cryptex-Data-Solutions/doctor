@@ -14,9 +14,9 @@
   },
   "scripts": {
     "start": "npm run build",
-    "build": "npm run clean && echo \"TypeScript version:\" && npx tsc --version && echo \"TypeScript path:\" && which tsc || true && tsc",
-    "watch": "node ./scripts/reset-debug.js && tsc -w",
-    "watch:debug": "node ./scripts/init-debug.js && tsc -w",
+    "build": "npm run clean && echo \"TypeScript version:\" && npx -p typescript tsc --version && echo \"TypeScript path:\" && which tsc || true && npx -p typescript tsc",
+    "watch": "node ./scripts/reset-debug.js && npx -p typescript tsc -w",
+    "watch:debug": "node ./scripts/init-debug.js && npx -p typescript tsc -w",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "vitest run --config e2e/vitest.config.ts",
     "test:e2e": "vitest run --config e2e/vitest.config.ts",
