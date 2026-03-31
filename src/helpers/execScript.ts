@@ -80,7 +80,16 @@ const promiseExecScript = async <T>(args: string[] = [], shouldSpawn: boolean = 
 
         resolve(stdout as any as T);
       } catch (e) {
-        reject(e instanceof Error ? e : new Error(String(e)));
+        const execError = e as any;
+        const details = [execError.stderr, execError.stdout].filter(Boolean).join('\n').trim();
+        const masked = details ? Logger.mask(details, toMask) : '';
+        const cmdMasked = Logger.mask(`${CliCommand.getName()} ${args.join(' ')}`, toMask);
+
+        if (masked) {
+          reject(new Error(`Command failed: ${cmdMasked}\n${masked}`));
+        } else {
+          reject(e instanceof Error ? e : new Error(String(e)));
+        }
       }
     }
   });
