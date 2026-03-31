@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "npm run build",
-    "build": "npm run clean && echo \"TypeScript version:\" && npx -p typescript tsc --version && echo \"TypeScript path:\" && which tsc || true && npx -p typescript tsc",
+    "build": "npm run clean && echo \"node_modules/.bin contents:\" && ls node_modules/.bin/tsc* || echo \"tsc not found in node_modules/.bin\" && echo \"TypeScript package:\" && node -e \"try{console.log(require('typescript/package.json').version)}catch(e){console.log('not installed')}\" && ./node_modules/.bin/tsc",
     "watch": "node ./scripts/reset-debug.js && npx -p typescript tsc -w",
     "watch:debug": "node ./scripts/init-debug.js && npx -p typescript tsc -w",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
