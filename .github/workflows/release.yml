@@ -3,12 +3,7 @@ name: Automated tests
 on:
   push:
     branches:
-      - dev
-  release:
-    types:
-      - published
-  # schedule:
-  #   - cron: "0 0 */7 * *"
+      - main
   workflow_dispatch:
 
 jobs:
@@ -18,218 +13,220 @@ jobs:
   publish_bash:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    if: ${{ !contains(github.event.head_commit.message, '#docs') }}
 
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - node: 22
-            os: macos-latest
-            siteUrl: SITEURL_MACOS
-          - node: 22
+          - name: Ubuntu
             os: ubuntu-latest
             siteUrl: SITEURL_LINUX
+          - name: macOS
+            os: macos-latest
+            siteUrl: SITEURL_MACOS
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node }}
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          # npm cache files are stored in `~/.npm` on Linux/macOS
-          path: ~/.npm
-          key: ${{ matrix.os }}-release-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ matrix.os }}-release-
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ matrix.os }}-release-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ matrix.os }}-release-
 
-      - run: npm i
+    - run: npm ci
+    - run: npm run build
+    - run: npm link
 
-      - run: npm start
+    - name: Clone and prepare sample
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
 
-      - run: npm link
+    - name: Publish via Doctor
+      run: |
+        cd doctor-sample
+        doctor publish \
+          -a certificate \
+          --appId "${{ secrets.APP_ID }}" \
+          --tenant "${{ secrets.TENANT_ID }}" \
+          --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" \
+          --password "${{ secrets.CERTIFICATE_PASSWORD }}" \
+          -u "${{ secrets[matrix.siteUrl] }}" \
+          --retryWhenFailed \
+          --cleanStart \
+          --cleanQuickLaunch \
+          --cleanEnd \
+          --skipSiteDesign \
+          --confirm
 
-      - name: Publish via Doctor
-        run: |
-          if [[ ${GITHUB_REF} != "refs/heads/main" ]]
-          then
-            git clone -b dev https://github.com/estruyf/doctor-sample
-          else
-            git clone https://github.com/estruyf/doctor-sample
-          fi
 
-          node ./scripts/prepare-sample.js
-          cd doctor-sample
-
-          startClean=""
-          # Check on which branch it is running
-          if [[ ${GITHUB_REF} == "refs/heads/main" || ${GITHUB_EVENT_NAME} == 'workflow_dispatch' ]]; then
-            startClean="--cleanStart"
-          fi
-
-          skipPages=""
-          # Check on which branch it is running
-          if [[ ${GITHUB_EVENT_NAME} == "schedule" ]]; then
-            skipPages="--skipExistingPages"
-          fi
-
-          doctor publish --auth certificate --certificateBase64Encoded "${{ secrets.CERTIFICATEBASE64ENCODED }}" --password "${{ secrets.PASSWORD }}" --appId "${{ secrets.APPID }}" --tenant "${{ secrets.TENANT }}" -u "${{ secrets[matrix.siteUrl] }}" --retryWhenFailed --cleanQuickLaunch --cleanEnd --confirm $startClean $skipPages
-        env:
-          DEBUG: ${{ secrets.DEBUG }}
-          TRANSLATOR_KEY: ${{ secrets.TRANSLATOR_KEY }}
-
-  #############################################
-  ### Publishing on Windows with PowerShell ###
-  #############################################
-  build_pwsh:
-    name: Build windows-latest - powershell
+  ##########################################
+  ### Build and publish - PowerShell     ###
+  ##########################################
+  publish_pwsh:
+    name: Publish - Windows PowerShell
     runs-on: windows-latest
-    if: ${{ !contains(github.event.head_commit.message, '#docs') }}
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
+    - name: Get npm cache directory
+      id: npm-cache
+      shell: pwsh
+      run: echo "dir=$(npm config get cache)" >> $env:GITHUB_OUTPUT
 
-      - uses: actions/cache@v5
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-release-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-release-
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: windows-pwsh-release-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          windows-pwsh-release-
 
-      - run: npm i
-        shell: powershell
+    - run: npm ci
+      shell: pwsh
+    - run: npm run build
+      shell: pwsh
+    - run: npm link
+      shell: pwsh
 
-      - run: npm start
-        shell: powershell
+    - name: Clone and prepare sample
+      shell: pwsh
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
 
-      - run: npm link
-        shell: powershell
+    - name: Publish via Doctor
+      shell: pwsh
+      run: |
+        cd doctor-sample
+        doctor publish `
+          -a certificate `
+          --appId "${{ secrets.APP_ID }}" `
+          --tenant "${{ secrets.TENANT_ID }}" `
+          --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" `
+          --password "${{ secrets.CERTIFICATE_PASSWORD }}" `
+          -u "${{ secrets.SITEURL_WINDOWS_POWERSHELL }}" `
+          --retryWhenFailed `
+          --cleanStart `
+          --cleanQuickLaunch `
+          --cleanEnd `
+          --skipSiteDesign `
+          --confirm
 
-      - name: Publish via Doctor
-        run: |
-          if (${env:GITHUB_REF} -ne 'refs/heads/main') {
-            git clone -b dev https://github.com/estruyf/doctor-sample
-          } else {
-            git clone https://github.com/estruyf/doctor-sample
-          }
 
-          node ./scripts/prepare-sample.js
-          cd doctor-sample
-
-          $startClean = ""
-          if (${env:GITHUB_REF} -eq 'refs/heads/main' -or ${env:GITHUB_EVENT_NAME} -eq 'workflow_dispatch') {
-            $startClean = "--cleanStart"
-          }
-
-          $skipPages=""
-          # Check on which branch it is running
-          if (${env:GITHUB_EVENT_NAME} -eq 'schedule') {
-            $skipPages="--skipExistingPages"
-          }
-
-          doctor publish --auth certificate --certificateBase64Encoded "${{ secrets.CERTIFICATEBASE64ENCODED }}" --password "${{ secrets.PASSWORD }}" --appId "${{ secrets.APPID }}" --tenant "${{ secrets.TENANT }}" -u "${{ secrets.SITEURL_WINDOWS_POWERSHELL }}" --retryWhenFailed --cleanQuickLaunch --cleanEnd --confirm $startClean $skipPages
-        shell: powershell
-        env:
-          DEBUG: ${{ secrets.DEBUG }}
-          TRANSLATOR_KEY: ${{ secrets.TRANSLATOR_KEY }}
-
-  ######################################
-  ### Publishing on Windows with CMD ###
-  ######################################
-  build_cmd:
-    name: Build windows-latest - cmd
+  ##########################################
+  ### Build and publish - CMD            ###
+  ##########################################
+  publish_cmd:
+    name: Publish - Windows CMD
     runs-on: windows-latest
-    if: ${{ !contains(github.event.head_commit.message, '#docs') }}
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
+    - name: Get npm cache directory
+      id: npm-cache
+      shell: cmd
+      run: |
+        for /f "tokens=*" %%i in ('npm config get cache') do echo dir=%%i >> %GITHUB_OUTPUT%
 
-      - uses: actions/cache@v5
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-release-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-release-
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: windows-cmd-release-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          windows-cmd-release-
 
-      - run: npm i
-        shell: cmd
+    - run: npm ci
+      shell: cmd
+    - run: npm run build
+      shell: cmd
+    - run: npm link
+      shell: cmd
 
-      - run: npm start
-        shell: cmd
+    - name: Clone and prepare sample
+      shell: cmd
+      run: |
+        git clone https://github.com/estruyf/doctor-sample
+        node ./scripts/prepare-sample.js
 
-      - run: npm link
-        shell: cmd
+    - name: Publish via Doctor
+      shell: cmd
+      run: |
+        cd doctor-sample
+        doctor publish -a certificate --appId "${{ secrets.APP_ID }}" --tenant "${{ secrets.TENANT_ID }}" --certificateBase64Encoded "${{ secrets.CERTIFICATE_BASE64 }}" --password "${{ secrets.CERTIFICATE_PASSWORD }}" -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanStart --cleanQuickLaunch --cleanEnd --skipSiteDesign --confirm
 
-      - name: Publish via Doctor
-        run: |
-          IF not "%GITHUB_REF%"=="refs/heads/main" (git clone -b dev https://github.com/estruyf/doctor-sample) else (git clone https://github.com/estruyf/doctor-sample)
 
-
-          node ./scripts/prepare-sample.js
-          cd doctor-sample
-
-          IF "%GITHUB_REF%"=="refs/heads/main" (SET startClean="--cleanStart")
-          IF "%GITHUB_EVENT_NAME%"=="workflow_dispatch" (SET startClean="--cleanStart")
-
-          IF "%GITHUB_EVENT_NAME%"=="schedule" (SET skipPages="--skipExistingPages")
-
-          doctor publish --auth certificate --certificateBase64Encoded "${{ secrets.CERTIFICATEBASE64ENCODED }}" --password "${{ secrets.PASSWORD }}" --appId "${{ secrets.APPID }}" --tenant "${{ secrets.TENANT }}" -u "${{ secrets.SITEURL_WINDOWS }}" --retryWhenFailed --cleanQuickLaunch --cleanEnd  --confirm %startClean% %skipPages%
-        shell: cmd
-        env:
-          DEBUG: ${{ secrets.DEBUG }}
-          TRANSLATOR_KEY: ${{ secrets.TRANSLATOR_KEY }}
-
-  ###############################
-  ### Release the new version ###
-  ###############################
-  release:
-    name: Release the new version
+  ###################################
+  ### Wait for SharePoint to sync ###
+  ###################################
+  wait_for_propagation:
+    name: Wait for SharePoint propagation
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [build]
-    if: ${{ github.event_name != 'schedule' && success() && !contains(github.event.head_commit.message, '#docs') }}
+    needs: [publish_bash, publish_pwsh, publish_cmd]
+    steps:
+    - name: Wait 30s for SharePoint eventual consistency
+      run: sleep 30
+
+
+  ###################################
+  ### E2E tests per published site ###
+  ###################################
+  e2e:
+    name: E2E - ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [wait_for_propagation]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            siteUrl: SITEURL_LINUX
+          - name: macOS
+            siteUrl: SITEURL_MACOS
+          - name: Windows PowerShell
+            siteUrl: SITEURL_WINDOWS_POWERSHELL
+          - name: Windows CMD
+            siteUrl: SITEURL_WINDOWS
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - run: npm i
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ubuntu-latest-e2e-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ubuntu-latest-e2e-
 
-      - run: npm start
+    - run: npm ci
 
-      - name: Publish release
-        run: npm publish --access public
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    - name: Wait for SharePoint propagation
+      run: sleep 30
 
-      - name: Update the package version
-        if: github.ref == 'refs/heads/dev'
-        run: node scripts/update-package-version.js $GITHUB_RUN_ID
-
-      - name: Publish beta release
-        run: npm publish --tag next --access public
-        if: github.ref == 'refs/heads/dev'
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    - name: Run E2E tests
+      run: npx vitest run --config e2e/vitest.config.ts
+      env:
+        DOCTOR_E2E_SITE_URL: ${{ secrets[matrix.siteUrl] }}
+        DOCTOR_E2E_APP_ID: ${{ secrets.APP_ID }}
+        DOCTOR_E2E_TENANT_ID: ${{ secrets.TENANT_ID }}
+        DOCTOR_E2E_CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+        DOCTOR_E2E_CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
