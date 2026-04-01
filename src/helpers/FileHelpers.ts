@@ -73,8 +73,6 @@ export class FileHelpers {
    */
   public static async cleanUp(options: CommandArguments, crntFolder: string) {
     if (options.cleanStart) {
-      const { webUrl } = options;
-
       try {
         const { webUrl } = options;
         const { stdout: filesOutput } = await executeWithRetry(
@@ -109,9 +107,6 @@ export class FileHelpers {
             );
           }
         }
-      } catch (e) {
-        Logger.debug(`Clean up files skipped: ${(e as Error).message}`);
-      }
 
         const { stdout: foldersOutput } = await executeWithRetry(
           "spo folder list",
@@ -151,7 +146,7 @@ export class FileHelpers {
           }
         }
       } catch (e) {
-        Logger.debug(`Clean up folders skipped: ${(e as Error).message}`);
+        throw e.message;
       }
     }
   }

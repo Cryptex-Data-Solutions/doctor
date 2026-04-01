@@ -107,5 +107,5 @@ export function getNavigationNodes(
 }
 
 export function loadHtml(html: string) {
-  return cheerio.load(html, { xmlMode: false, decodeEntities: true });
+  return cheerio.load(html, { xmlMode: false });
 }
