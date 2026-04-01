@@ -5,7 +5,23 @@ todo.md
 .DS_Store
 screenshots
 mochawesome-report
-.vscode/
 
+# IDE / editor
+.vscode/
+.idea/
+
+# Local project files
+CLAUDE.md
+MODERNIZATION.md
+cypress.env.json
+
+# Certificates and secrets
 *.pem
 *.pfx
+*.pfx.b64
+*.crt
+*.key
+
+# Test artifacts
+doctor-sample/
+test-sample/
