@@ -22,7 +22,6 @@
     "watch": "node ./scripts/reset-debug.js && (tsc -w & tsc-alias -w)",
     "watch:debug": "node ./scripts/init-debug.js && (tsc -w & tsc-alias -w)",
     "test": "vitest run --config e2e/vitest.config.ts",
-    "test:e2e": "vitest run --config e2e/vitest.config.ts",
     "docs": "cd docs && hogo serve",
     "prepare": "(husky || true) && npm run build"
   },
