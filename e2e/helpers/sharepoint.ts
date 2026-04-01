@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 
-const CLI = path.resolve(__dirname, '../../bin/localm365');
+const CLI = path.resolve(__dirname, '../../node_modules/@pnp/cli-microsoft365/dist/index.js');
 const MAX_RETRIES = 5;
 const INITIAL_BACKOFF_MS = 5000;
 
