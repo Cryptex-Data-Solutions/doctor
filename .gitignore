@@ -12,6 +12,7 @@ mochawesome-report
 # Local project files
 CLAUDE.md
 MODERNIZATION.md
+UPSTREAM_BUGS.md
 cypress.env.json
 
 # Certificates and secrets
