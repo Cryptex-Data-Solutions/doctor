@@ -7,7 +7,6 @@ screenshots
 mochawesome-report
 
 # IDE / editor
-.vscode/
 .idea/
 
 # Local project files
