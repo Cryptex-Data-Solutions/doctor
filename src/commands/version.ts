@@ -1,26 +1,32 @@
-import * as fs from "fs";
-import kleur = require("kleur");
-import * as path from "path";
+import kleur from "kleur";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { readFileAsync } from "@utils";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export class Version {
-
   /**
-   * Retrieve the version number
+  * Prints the currently installed Doctor version to stdout.
+  * @returns A promise that resolves after the version message is printed.
    */
-  public static start() {
-    const version = this.getVersion();
+  public static async start() {
+    const version = await this.getVersion();
     if (version) {
       console.log(`Current installed version: ${version}`);
     } else {
-      console.log(kleur.red('Unknown version!'));
+      console.log(kleur.red("Unknown version!"));
     }
   }
 
   /**
-   * Retrieve the current version
+   * Reads and returns the package version from package.json.
+   * @returns A promise that resolves to the version string, or null when it cannot be determined.
    */
-  public static getVersion() {
-    const pkg = fs.readFileSync(path.join(__dirname, '../../package.json'), { encoding: 'utf-8' });
+  public static async getVersion() {
+    const pkg = await readFileAsync(join(__dirname, "../../package.json"), {
+      encoding: "utf-8",
+    });
     if (pkg) {
       const parsed = JSON.parse(pkg);
       return parsed.version;

@@ -1,0 +1,6 @@
+{
+  "exportall.config.folderListener": [
+    "/src/utils"
+  ],
+  "biome.enabled": false
+}

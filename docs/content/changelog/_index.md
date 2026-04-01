@@ -6,6 +6,23 @@ description: The changelog of Doctor
 type: docs-main
 ---
 
+## [2.0.0]
+
+
+- New start for Doctor with Node.js >22 support.
+- Full refactoring to support the latest version of the CLI for Microsoft 365.
+
+## [1.12.1]
+
+
+- [#164](https://github.com/estruyf/doctor/issues/164): Fix dependencies
+
+## [1.12.0]
+
+
+- Updates to support Node.js >= 18
+- [#153](https://github.com/estruyf/doctor/issues/153): Added a new `tocLevels` option to define the heading levels to include in the table of contents. Thanks to [Bradley Goulding](https://github.com/BradleyGoulding).
+
 ## [1.11.0]
 
 

@@ -5,7 +5,7 @@ lastmod: 2021-03-10T14:24:35.121Z
 weight: 4
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 Options are specified via command arguments, or within a `doctor.json` file (automatically gets created on initialization `doctor init`).
@@ -13,16 +13,9 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 ## For all commands
 
 `-a, --auth <auth>`
-: Specify the authentication type to use. Values can be `deviceCode` (default) or `password` or `certificate`.
+: Specify the authentication type to use. Values can be `deviceCode` (default) or `certificate`.
 
 > **Info**: Check out the [Certificate Authentication](../certificate-authentication) section for more information about using the `certificate` approach.
-
-`--username <username>`
-: When using `password` authentication, you need to pass the `username` and `password`.
-
-
-`--password <password>`
-: When using `password` authentication, you need to pass the `username` and `password`.
 
 `-u, --url <url>`
 : The URL of the site collection to use.
@@ -47,10 +40,6 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 `--continueOnError`
 : Continue when an error occurs during the publishing process.
 
-`--disableTracking`
-: In order to make `doctor` better, we need to know how it is used. That is why we started to track which commands and related parameters are used. We are not tracking the values of these parameters, only if they are used or not. Still if you want to opt-out, you can do this by specifying the disable tracking flag.
-
-> **Important**: This flag can only be added to the command execution. Using it in the `doctor.json` fill will be ignored.
 ## Publish command specific options
 
 `--outputFolder <outputFolder>`
@@ -74,7 +63,7 @@ Options are specified via command arguments, or within a `doctor.json` file (aut
 > **Important**: This flag can only be added to the command execution. Using it in the `doctor.json` fill will be ignored.
 
 `--commandName <commandName>`
-: In case you want to use the locally installed `CLI for Microsoft 365`, you can use this flag. By default, it uses the version specified in the `doctor` tool. You can use the a locally installed version as follows: `--commandName m365`.
+: Override the command used to execute `CLI for Microsoft 365`. By default, `doctor` executes commands through the bundled `@pnp/cli-microsoft365` API directly. Use this option only when you explicitly want to run a different command binary.
 
 `--skipExistingPages`
 : Will not overwrite pages if they already existed on the site.
@@ -144,7 +133,7 @@ Manual translation example:
     ],
     "overwriteTranslationsOnChange": true,
     "translator:" null
-  } 
+  }
 }
 ```
 
@@ -163,7 +152,7 @@ Machine translation example:
       "endpoint": "https://api.cognitive.microsofttranslator.com/",
       "region": "<region name, example: westeurope>"
     }
-  } 
+  }
 }
 ```
 
@@ -211,6 +200,7 @@ The `markdown` property allows you to define how you want to render the HTML in 
   - **allowHtml**: `boolean` - By default SharePoint renders the HTML. If you set this to `true`, it will allow Doctor to generate the HTML and allows you to make use of all HTML capabilities the tool has to offer. When you enable this, you can also make use of [shortcodes](../shortcodes) in markdown to make more HTML rich pages.
   - **theme**: `string` - Specify the theme to use for the code blocks. You can use `Dark` or `Light`. Default is `Dark`.
   - **shortcodesFolder**: `string` - Specifies where custom shortcodes can be retrieved. Check [shortcodes](../shortcodes) section to learn more about how shortcodes can be used. Default folder location `Doctor` expects is `./shortcodes`. If you want to change this, you can use the `shortcodesFolder` property and update it appropriate.
+  - **tocLevels**: `number` - Specifies the number of levels to show in the table of contents. Default is `[1, 2, 3, 4]`.
 
 Example:
 
@@ -219,7 +209,8 @@ Example:
   "markdown": {
     "allowHtml": true,
     "theme": "light",
-    "shortcodesFolder": "./shortcodes"
+    "shortcodesFolder": "./shortcodes",
+    "tocLevels": [1, 2, 3, 4]
   }
 }
 ```
@@ -234,11 +225,13 @@ You can also define a static navigation structure in the `doctor.json` file. Exa
 {
   "menu": {
     "QuickLaunch": {
-      "items": [{
-        "id": "documentation",
-        "name": "Documentation",
-        "url": ""
-      }]
+      "items": [
+        {
+          "id": "documentation",
+          "name": "Documentation",
+          "url": ""
+        }
+      ]
     }
   }
 }

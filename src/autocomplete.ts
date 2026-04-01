@@ -1,37 +1,49 @@
-import * as omelette from 'omelette';
-import { Command } from './commands/Command';
-import { OptionsHelper } from './helpers';
+import omelette from "omelette";
+import { Command } from "@commands";
+import { OptionsHelper } from "@helpers";
 
 export class Autocomplete {
   private complete: omelette.Instance = null;
-  private commands: string[] = [Command.cleanup, Command.init, Command.publish, Command.version];
+  private commands: string[] = [
+    Command.cleanup,
+    Command.init,
+    Command.publish,
+    Command.version,
+  ];
 
   constructor() {
     this.complete = omelette(`doctor`);
-    this.complete.on('complete', this.handleAutocomplete);
+    this.complete.on("complete", this.handleAutocomplete);
     this.complete.init();
   }
-  
+
   /**
-   * Install the autocomplete functionality
+   * Installs shell initialization required for Doctor command autocompletion.
+   * @returns Nothing.
    */
   public setup() {
     this.complete.setupShellInitFile();
   }
 
   /**
-   * Cleanup the autocomplete functionality
+   * Removes shell initialization that was added for Doctor autocompletion.
+   * @returns Nothing.
    */
   public cleanup() {
     this.complete.cleanupShellInitFile();
   }
 
   /**
-   * Handles the autocomplete per command
-   * @param fragment 
-   * @param data 
+   * Resolves autocomplete suggestions based on the current command line context.
+   * Returns command names for the first argument and available flags for subsequent arguments.
+   * @param fragment The current token fragment being completed.
+   * @param data Omelette callback payload containing line context and response handler.
+   * @returns Nothing. Suggestions are returned through data.reply(...).
    */
-  private handleAutocomplete = (fragment: string, data: omelette.CallbackValue) => {
+  private handleAutocomplete = (
+    fragment: string,
+    data: omelette.CallbackValue
+  ) => {
     let replies: omelette.Choices = [];
     let allWords: string[] = [];
 
@@ -43,12 +55,14 @@ export class Autocomplete {
       if (allWords[0] !== Command.version && allWords[0] !== Command.cleanup) {
         const args = OptionsHelper.getArgs();
         const keys = Object.keys(args);
-        replies = keys.filter(k => !allWords.includes(k) && k.startsWith(`--`));
+        replies = keys.filter(
+          (k) => !allWords.includes(k) && k.startsWith(`--`)
+        );
       }
     }
 
-    data.reply(replies)
-  }
+    data.reply(replies);
+  };
 }
 
 export const autocomplete = new Autocomplete();

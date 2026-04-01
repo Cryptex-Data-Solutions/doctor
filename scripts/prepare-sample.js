@@ -1,46 +1,24 @@
-const fs = require('fs');
-const path = require('path');
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const outputPath = path.join(__dirname, `../doctor-sample/doctor.json`);
 
-const config = {
-  "$schema": "https://raw.githubusercontent.com/estruyf/doctor/main/schema/1.2.1.json",
-  "folder": "./src",
-  "auth": "certificate",
-  "library": "sitepages",
-  "disableComments": false,
-  "markdown": {
-    "allowHtml": true,
-    "theme": "dark",
-    "shortcodesFolder": "./shortcodes"
-  },
-  "siteDesign": {
-    "logo": "./src/assets/doctor.png",
-    "theme": "Red",
-    "chrome": {
-      "headerLayout": "Compact",
-      "headerEmphasis": "Dark"
-    }
-  },
-  "menu": {
-    "QuickLaunch": {
-      "items": [
-        {
-          "id": "doctor",
-          "name": "Doctor",
-          "url": "",
-          "weight": 2
-        },
-        {
-          "id": "tests",
-          "name": "Test pages",
-          "url": "",
-          "weight": 3
-        }
-      ]
-    }
-  }
-};
+const file = fs.readFileSync(newPath, { encoding: "utf-8" });
+if (file) {
+  const data = JSON.parse(file);
 
-fs.writeFileSync(outputPath, JSON.stringify(config, null, 2), { encoding: "utf-8" });
-console.log(`Created doctor.json at ${outputPath}`);
+  console.log(`Multilingual settings`);
+  console.log(`Key: ${process.env.TRANSLATOR_KEY}`);
+  console.log(data.multilingual);
+
+  if (data && data.multilingual && data.multilingual.translator) {
+    data.multilingual.translator.key = process.env.TRANSLATOR_KEY;
+    fs.writeFileSync(newPath, JSON.stringify(data, null, 2), {
+      encoding: "utf-8",
+    });
+  }
+}

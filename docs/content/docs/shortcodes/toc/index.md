@@ -5,7 +5,7 @@ lastmod: 2021-03-03T13:04:02.958Z
 weight: 3
 draft: false
 keywords:
-  - ''
+  - ""
 ---
 
 The `toc` shortcode allows you to include a table of contents for the current page to easily link to sections/headers on your page.
@@ -33,4 +33,16 @@ Example:
 
 ```html
 <toc title="Table of contents" position="right" />
+```
+
+## Global options
+
+You can set the heading levels to be included/excluded in the `tocLevels` option in your `doctor.json` file.
+
+```json
+{
+  "markdown": {
+    "tocLevels": [1, 2, 3, 4]
+  }
+}
 ```
