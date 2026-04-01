@@ -1,27 +1,33 @@
-import * as fs from 'fs';
-import * as fg from 'fast-glob';
-import * as path from 'path';
-import * as cheerio from 'cheerio';
-import { IconRenderer, CalloutRenderer, TableOfContentsRenderer } from '../shortcodes';
-import { Shortcode, TocPosition } from '../models';
-import { Logger } from './logger';
-import { TelemetryHelper } from './TelemetryHelper';
+import { join } from "path";
+import { pathToFileURL } from "url";
+import fg from "fast-glob";
+import * as cheerio from "cheerio";
+import {
+  IconRenderer,
+  CalloutRenderer,
+  TableOfContentsRenderer,
+} from "../shortcodes/index.js";
+import { Shortcode, TocPosition } from "@models";
+import { Logger } from "@helpers";
+import { existsAsync } from "@utils";
 
 export class ShortcodesHelpers {
   private static shortcodes: Shortcode = {
     icon: IconRenderer,
     callout: CalloutRenderer,
-    toc: TableOfContentsRenderer
+    toc: TableOfContentsRenderer,
   };
 
   /**
    * Initialize the shortcodes
-   * @param shortcodes 
+   * @param shortcodes
    */
   public static async init(shortcodes: string = "./shortcodes") {
+    // console.log(`Initializing shortcodes from folder: ${shortcodes}`);
+
     let files: string[] = [];
-    if (fs.existsSync(shortcodes)) {
-      files = await fg((`${shortcodes}/**/*.js`).replace(/\\/g, '/'));
+    if (await existsAsync(shortcodes)) {
+      files = await fg(`${shortcodes}/**/*.{js,cjs}`.replace(/\\/g, "/"));
     }
 
     Logger.debug(`Doctor found ${files.length} custom shortcodes`);
@@ -29,19 +35,22 @@ export class ShortcodesHelpers {
     // Load all the custom shortcodes
     if (files && files.length > 0) {
       for (const file of files) {
-        const sc = await require(path.join(process.cwd(), file));
+        const filePath = join(process.cwd(), file);
+        const loadedModule = await import(pathToFileURL(filePath).href);
+        const sc = loadedModule.default ?? loadedModule;
         if (sc && sc.name && sc.render) {
-          ShortcodesHelpers.shortcodes[sc.name] = { render: sc.render, beforeMarkdown: !!sc.beforeMarkdown };
+          ShortcodesHelpers.shortcodes[sc.name] = {
+            render: sc.render,
+            beforeMarkdown: !!sc.beforeMarkdown,
+          };
         }
       }
     }
-
-    TelemetryHelper.trackCustomShortcodes(files.length);
   }
 
   /**
    * Parse shortcodes before markdown was processed
-   * @param htmlMarkup 
+   * @param htmlMarkup
    */
   public static async parseBefore(markdown: string): Promise<string> {
     return this.parse(markdown, true);
@@ -49,7 +58,7 @@ export class ShortcodesHelpers {
 
   /**
    * Parse shortcodes after markdown was processed
-   * @param htmlMarkup 
+   * @param htmlMarkup
    */
   public static async parseAfter(htmlMarkup: string): Promise<string> {
     return this.parse(htmlMarkup, false);
@@ -57,30 +66,42 @@ export class ShortcodesHelpers {
 
   /**
    * Parse the markdown or HTML with the shortcodes
-   * @param htmlMarkup 
+   * @param htmlMarkup
    */
-  private static async parse(htmlMarkup: string, beforeMarkdown: boolean): Promise<string> {
+  private static async parse(
+    htmlMarkup: string,
+    beforeMarkdown: boolean,
+  ): Promise<string> {
     if (!ShortcodesHelpers.shortcodes) return htmlMarkup;
 
     let tags = Object.getOwnPropertyNames(ShortcodesHelpers.get());
     if (!tags || tags.length < 1) return htmlMarkup;
 
     for (const tag of tags) {
-      if (typeof ShortcodesHelpers.shortcodes[tag].render !== 'function') {
+      if (typeof ShortcodesHelpers.shortcodes[tag].render !== "function") {
         throw new Error(`Missing render function for shortcode tag: "${tag}"`);
       }
     }
 
-    tags = tags.filter(tag => ShortcodesHelpers.shortcodes[tag].beforeMarkdown === beforeMarkdown);
+    tags = tags.filter(
+      (tag) =>
+        ShortcodesHelpers.shortcodes[tag].beforeMarkdown === beforeMarkdown,
+    );
 
     Logger.debug(`Doctor uses ${tags.length} shortcodes for HTML parsing.`);
-    TelemetryHelper.trackShortcodeUsage(tags.length);
 
-    const $ = cheerio.load(htmlMarkup, { xmlMode: true, decodeEntities: false });
+    const $ = cheerio.load(htmlMarkup, {
+      xml: {
+        xmlMode: true,
+        decodeEntities: false,
+      },
+    });
 
     for (const tag of tags) {
       const elms = $(tag).toArray();
-      Logger.debug(`Doctor found ${elms.length} element(s) for "${tag}" shortcode.`);
+      Logger.debug(
+        `Doctor found ${elms.length} element(s) for "${tag}" shortcode.`,
+      );
       if (elms && elms.length > 0) {
         const shortcode = ShortcodesHelpers.shortcodes[tag];
 
@@ -92,7 +113,13 @@ export class ShortcodesHelpers {
             const $elm = $(elm);
             const attributes: any = this.getAllAttributes($elm.get(0));
 
-            if (tag === "toc" && attributes && attributes.position && (attributes.position.toLowerCase() === TocPosition.left || attributes.position.toLowerCase() === TocPosition.right)) {
+            if (
+              tag === "toc" &&
+              attributes &&
+              attributes.position &&
+              (attributes.position.toLowerCase() === TocPosition.left ||
+                attributes.position.toLowerCase() === TocPosition.right)
+            ) {
               tocPostProcessing = attributes.position;
             }
 
@@ -106,26 +133,30 @@ export class ShortcodesHelpers {
         }
 
         if (tocPostProcessing) {
-          const $parent = $('.doctor__container');
-          const $elm = $('.doctor__container__toc');
+          const $parent = $(".doctor__container");
+          const $elm = $(".doctor__container__toc");
           if ($elm && $parent) {
             $elm.prependTo($parent);
-            $parent.find('.doctor__container__markdown').addClass(`doctor__container__markdown_${tocPostProcessing.toLowerCase()}_padding`);
+            $parent
+              .find(".doctor__container__markdown")
+              .addClass(
+                `doctor__container__markdown_${tocPostProcessing.toLowerCase()}_padding`,
+              );
           }
         }
       }
     }
-    
+
     Logger.debug(`The HTML after shortcode convertion`);
     Logger.debug($.html());
     Logger.debug(``);
 
     return $.html();
   }
-  
+
   /**
    * Get all attributes
-   * @param $elm 
+   * @param $elm
    */
   public static getAllAttributes($elm: any) {
     const allAttr = {};
@@ -133,13 +164,13 @@ export class ShortcodesHelpers {
     if ($elm.attribs) {
       const names = Object.keys($elm.attribs);
 
-      for(const name of names) {
+      for (const name of names) {
         allAttr[`${name}`] = $elm.attribs[name];
       }
     }
     return allAttr;
-  };
-  
+  }
+
   /**
    * Retrieve all registered shortcodes
    */

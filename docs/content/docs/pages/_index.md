@@ -5,9 +5,8 @@ lastmod: 2021-02-22T10:06:07.167Z
 weight: 2
 draft: false
 keywords:
-  - ''
+  - ""
 ---
-
 
 You start by creating pages as Markdown files (`.md`) in the source folder (`./src` is the default, but you can change this). The markdown pages should contain the following front matter.
 
@@ -27,7 +26,7 @@ Optional Front Matter properties are:
 
 - **slug**: `string` - If a slug is not defined, the title and current folder struture will be used. You can add the slug with our without `.aspx` file extension. The tool will automatically add it.
 - **draft**: `boolean` - defines if you want to publish the article during the publishing phase. Default: if not defined, the page will always be published.
-- **description**: `string` - the page description to add. *Be aware*: description is limited to 255 characters.
+- **description**: `string` - the page description to add. _Be aware_: description is limited to 255 characters.
 - **comments**: `boolean` - with this setting you can enable/disable page commenting. By default this is disabled.
 - **layout**: `Article` | `Home` - defines which page layout you want to use. Default layout type is `Article`.
 - **template**: `string` - specify the title of the page template which you want to use for the current page.
@@ -66,7 +65,7 @@ The menu property allows you to create a navigation structure for you static con
 
 #### Example 1
 
-The following page will be added to the root of the `QuickLaunch` after the already defined links. 
+The following page will be added to the root of the `QuickLaunch` after the already defined links.
 
 ```markdown
 ---

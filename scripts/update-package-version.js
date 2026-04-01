@@ -1,20 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+import fs from "node:fs";
+import path from "node:path";
 
-const packageJson = require('../package.json');
-const shaArg = process.argv[process.argv.length - 1];
-
-if (!shaArg) {
-  console.error('Expected commit SHA as the last argument, but none was provided.');
-  process.exit(1);
-}
-
-const suffix = shaArg.slice(0, 7);
-packageJson.version += `-beta.${suffix}`;
-
-console.log(packageJson.version);
-
-fs.writeFileSync(
-  path.join(path.resolve('.'), 'package.json'),
-  JSON.stringify(packageJson, null, 2)
+const packageJsonPath = path.join(path.resolve("."), "package.json");
+const packageJson = JSON.parse(
+  fs.readFileSync(packageJsonPath, { encoding: "utf-8" }),
 );
+packageJson.version += `-beta.${process.argv[process.argv.length - 1].substr(0, 7)}`;
+console.log(packageJson.version);
+fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));

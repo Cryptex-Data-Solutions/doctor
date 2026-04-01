@@ -1,1 +1,1 @@
-{"title":"1.11.0","updates":[{"id":89,"title":"[Enhancement]: Use Cognitive Service Translation API connection for machine translations"},{"id":90,"title":"[Enhancement]: Custom colors for callouts"}]}
+{"title":"2.0.0","updates":[{"id":null,"title":"New start for Doctor with Node.js >22 support."},{"id":null,"title":"Full refactoring to support the latest version of the CLI for Microsoft 365."}]}

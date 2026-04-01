@@ -1,30 +1,56 @@
-import { MultilingualHelper } from './MultilingualHelper';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as cheerio from 'cheerio';
-import * as matter from "gray-matter";
-import md = require('markdown-it');
-import { CommandArguments, PublishOutput, Control, PageFrontMatter } from '../models';
-import { FileHelpers, FolderHelpers, FrontMatterHelper, HeaderHelper, Logger, NavigationHelper, PagesHelper, StatusHelper } from '.';
-import { Observable, Subscriber } from 'rxjs';
+import { CheerioAPI, load } from "cheerio";
+import { Element } from "domhandler";
+import matter from "gray-matter";
+import MarkdownIt from "markdown-it";
+import {
+  CommandArguments,
+  PublishOutput,
+  Control,
+  PageFrontMatter,
+} from "@models";
+import {
+  FileHelpers,
+  FolderHelpers,
+  FrontMatterHelper,
+  HeaderHelper,
+  Logger,
+  MultilingualHelper,
+  NavigationHelper,
+  PagesHelper,
+  StatusHelper,
+} from "@helpers";
+import { Observable, Subscriber } from "rxjs";
+import { basename, join, dirname } from "path";
+import { existsAsync, mkdirAsync, readFileAsync, writeFileAsync } from "@utils";
 
 export class DoctorTranspiler {
-  private static converter = new md({ html: true, breaks: true });
+  private static converter = new MarkdownIt({ html: true, breaks: true });
 
   /**
    * Process the retrieved Markdown files
-   * @param ctx 
+   * @param ctx
    */
-  public static async processMDFiles(ctx: any, options: CommandArguments, output: PublishOutput): Promise<Observable<string>> {
+  public static async processMDFiles(
+    ctx: any,
+    options: CommandArguments,
+    output: PublishOutput,
+  ): Promise<Observable<string>> {
     const { webUrl } = options;
 
-    return new Observable(observer => {
+    Logger.debug("Starting processing the markdown files...");
+    Logger.debug(`Web URL: ${webUrl}`);
+
+    return new Observable((observer) => {
       (async () => {
         const { files } = ctx;
-        
+
+        Logger.debug(`Number of markdown files found: ${files.length}`);
+
         await PagesHelper.getAllPages(webUrl);
 
         for (const file of files) {
+          Logger.debug(`Processing file: ${file}`);
+
           try {
             await this.processFile(file, observer, options, output);
           } catch (e) {
@@ -43,33 +69,54 @@ export class DoctorTranspiler {
 
   /**
    * Process page
-   * @param file 
-   * @param observer 
-   * @param converter 
-   * @param options 
-   * @param output 
-   * @param languagePage 
+   * @param file
+   * @param observer
+   * @param converter
+   * @param options
+   * @param output
+   * @param languagePage
    */
-  public static async processFile(file: string, observer: Subscriber<string>, options: CommandArguments, output: PublishOutput, languagePageSlug: string = null) {
-    const { webUrl, webPartTitle, skipExistingPages, disableComments } = options;
+  public static async processFile(
+    file: string,
+    observer: Subscriber<string>,
+    options: CommandArguments,
+    output: PublishOutput,
+    languagePageSlug: string = null,
+  ) {
+    const { webUrl, webPartTitle, skipExistingPages, disableComments } =
+      options;
 
-    if (file.endsWith('.md')) {
-      const filename = path.basename(file);
+    if (file.endsWith(".md")) {
+      const filename = basename(file);
       observer.next(`Started processing: ${filename}`);
 
-      let contents = fs.readFileSync(file, { encoding: "utf-8" });
-      if (contents) {
+      // if (file.includes('..') || path.isAbsolute(file)) {
+      //   throw new Error(`Invalid file path`);
+      // }
 
+      let contents = await readFileAsync(file, { encoding: "utf-8" });
+      if (contents) {
         const markup: matter.GrayMatterFile<string> = matter(contents);
 
         // Don't process language files, these will be processed later in the process
-        if (!languagePageSlug && markup.data && markup.data.type === "translation") {
+        if (
+          !languagePageSlug &&
+          markup.data &&
+          markup.data.type === "translation"
+        ) {
           return;
         }
 
-        const htmlMarkup = file.endsWith(`.machinetranslated.md`) ? contents : this.converter.render(contents);
+        const htmlMarkup = file.endsWith(`.machinetranslated.md`)
+          ? contents
+          : this.converter.render(contents);
 
-        const $ = cheerio.load(htmlMarkup, { xmlMode: true, decodeEntities: false });
+        const $ = load(htmlMarkup, {
+          xml: {
+            xmlMode: true,
+            decodeEntities: false,
+          },
+        });
         const imgElms = $(`img`).toArray();
         const anchorElms = $(`a`).toArray();
 
@@ -82,28 +129,53 @@ export class DoctorTranspiler {
           }
         }
 
-        let { title, description, draft, layout, header, template, metadata } = markup.data as PageFrontMatter;
-        let slug = languagePageSlug || FrontMatterHelper.getSlug(markup.data as PageFrontMatter, options.startFolder, file);
+        let { title, description, draft, layout, header, template, metadata } =
+          markup.data as PageFrontMatter;
+        let slug =
+          languagePageSlug ||
+          FrontMatterHelper.getSlug(
+            markup.data as PageFrontMatter,
+            options.startFolder,
+            file,
+          );
 
         // Check if comments are disabled on global level, or overwrite it from page level
-        const disablePageComments = typeof markup.data.comments !== "undefined" ? !markup.data.comments : disableComments;
-        Logger.debug(`Page comments ${disablePageComments ? 'disabled' : 'enabled'}`);
+        const disablePageComments =
+          typeof markup.data.comments !== "undefined"
+            ? !markup.data.comments
+            : disableComments;
+        Logger.debug(
+          `Page comments ${disablePageComments ? "disabled" : "enabled"}`,
+        );
 
         // Image processing
         if (imgElms && imgElms.length > 0) {
           observer.next(`Uploading images referenced in ${filename}`);
 
-          markup.content = await this.processImages($, imgElms, file, markup.content, options, output);
+          markup.content = await this.processImages(
+            $,
+            imgElms,
+            file,
+            markup.content,
+            options,
+            output,
+          );
         }
 
         // Anchor processing
         if (anchorElms && anchorElms.length > 0) {
           observer.next(`Processing links in ${filename}`);
 
-          Logger.debug(`Number of links in ${filename}: ${anchorElms.length}`)
+          Logger.debug(`Number of links in ${filename}: ${anchorElms.length}`);
 
           try {
-            markup.content = this.processLinks($, anchorElms, file, markup.content, options);
+            markup.content = await this.processLinks(
+              $,
+              anchorElms,
+              file,
+              markup.content,
+              options,
+            );
           } catch (e) {
             throw (e as Error).message;
           }
@@ -112,37 +184,82 @@ export class DoctorTranspiler {
         // Checks if output needs to be generated
         if (options.outputFolder) {
           const { outputFolder, startFolder } = options;
-          const processedFilePath = file.replace(startFolder, path.join(process.cwd(), outputFolder));
-          const dirPath = path.dirname(processedFilePath);
-          fs.mkdirSync(dirPath, { recursive: true });
-          fs.writeFileSync(processedFilePath, markup.content, { encoding: "utf-8" });
+          const processedFilePath = file.replace(
+            startFolder,
+            join(process.cwd(), outputFolder),
+          );
+          const dirPath = dirname(processedFilePath);
+          await mkdirAsync(dirPath, { recursive: true });
+          await writeFileAsync(processedFilePath, markup.content, {
+            encoding: "utf-8",
+          });
         }
 
         if (markup && markup.content) {
-          observer.next(`Creating or updating the page in SharePoint for ${filename}`);
+          observer.next(
+            `Creating or updating the page in SharePoint for ${filename}`,
+          );
 
           // Check if the page already exists
-          const existed = await PagesHelper.createPageIfNotExists(webUrl, slug, title, layout, disablePageComments, description, template || options.pageTemplate, (skipExistingPages && !languagePageSlug));
+          const existed = await PagesHelper.createPageIfNotExists(
+            webUrl,
+            slug,
+            title,
+            layout,
+            disablePageComments,
+            description,
+            template || options.pageTemplate,
+            skipExistingPages && !languagePageSlug,
+          );
 
-          Logger.debug(`Page existed: ${existed} - Skipping existing pages: ${skipExistingPages}`);
+          Logger.debug(
+            `Page existed: ${existed} - Skipping existing pages: ${skipExistingPages}`,
+          );
 
-          if (!existed || (existed && !skipExistingPages) || (existed && languagePageSlug)) {
+          if (
+            !existed ||
+            (existed && !skipExistingPages) ||
+            (existed && languagePageSlug)
+          ) {
             // Retrieving all the controls from the page, so that we can start replacing the
-            const controlData: string = await PagesHelper.getPageControls(webUrl, slug);
+            const controlData: string = await PagesHelper.getPageControls(
+              webUrl,
+              slug,
+            );
             if (controlData) {
               const webparts: Control[] = JSON.parse(controlData);
-              const markdownWp: Control = webparts.find((c: Control) => c.webPartData && c.webPartData.title === webPartTitle);
-              await PagesHelper.insertOrCreateControl(webPartTitle, markup.content, slug, webUrl, markdownWp ? markdownWp.id : null, options.markdown, file.endsWith(`.machinetranslated.md`));
+              const markdownWp: Control = webparts.find(
+                (c: Control) =>
+                  c.webPartData && c.webPartData.title === webPartTitle,
+              );
+              await PagesHelper.insertOrCreateControl(
+                webPartTitle,
+                markup.content,
+                slug,
+                webUrl,
+                options,
+                markdownWp ? markdownWp.id : null,
+                options.markdown,
+                file.endsWith(`.machinetranslated.md`),
+              );
             }
 
-            // Set the page header after content is written (CLI v11 requires CanvasContent1 to be non-null)
-            await HeaderHelper.set(file, webUrl, slug, header, options, !!(template || options.pageTemplate));
+            // Apply the page header after the page has content, because the CLI header command
+            // fails on pages with uninitialized CanvasContent1/LayoutWebpartsContent.
+            await HeaderHelper.set(
+              file,
+              webUrl,
+              slug,
+              header,
+              options,
+              !!(template || options.pageTemplate),
+            );
 
             // Check if metadata needs to be added to the page
             if (metadata) {
               await PagesHelper.setPageMetadata(webUrl, slug, metadata);
             }
-            
+
             // Check if page needs to be published
             if (typeof draft === "undefined" || !draft) {
               observer.next(`Publishing ${filename}`);
@@ -162,15 +279,45 @@ export class DoctorTranspiler {
         }
 
         // Check if the file contains a menu element to add too and if not in draft status (cannot add draft pages to navigation)
-        if (output.navigation && markup && markup.data && markup.data.menu && !markup.data.draft) {
-          Logger.debug(`Adding item to the navigation: ${slug} - ${title} - ${JSON.stringify(markup.data.menu)} `);
+        if (
+          output.navigation &&
+          markup &&
+          markup.data &&
+          markup.data.menu &&
+          !markup.data.draft
+        ) {
+          Logger.debug(
+            `Adding item to the navigation: ${slug} - ${title} - ${JSON.stringify(
+              markup.data.menu,
+            )} `,
+          );
 
-          output.navigation = NavigationHelper.hierarchy(webUrl, output.navigation, markup.data.menu, slug, title);
+          output.navigation = NavigationHelper.hierarchy(
+            webUrl,
+            output.navigation,
+            markup.data.menu,
+            slug,
+            title,
+          );
         }
 
         // Verify if there are linked multilingual pages
-        if (!languagePageSlug && options.multilingual && options.multilingual.enableTranslations && markup && markup.data && markup.data.localization) {
-          await MultilingualHelper.linkPage(markup.data.localization, file, slug, options, observer, output);
+        if (
+          !languagePageSlug &&
+          options.multilingual &&
+          options.multilingual.enableTranslations &&
+          markup &&
+          markup.data &&
+          markup.data.localization
+        ) {
+          await MultilingualHelper.linkPage(
+            markup.data.localization,
+            file,
+            slug,
+            options,
+            observer,
+            output,
+          );
         }
       }
     }
@@ -178,38 +325,59 @@ export class DoctorTranspiler {
 
   /**
    * Process images referenced in the file
-   * @param $ 
-   * @param imgElms 
-   * @param filePath 
-   * @param contents 
-   * @param options 
-   * @param output 
+   * @param $
+   * @param imgElms
+   * @param filePath
+   * @param contents
+   * @param options
+   * @param output
    */
-  private static async processImages($: cheerio.Root, imgElms: cheerio.Element[], filePath: string, contents: string, options: CommandArguments, output: PublishOutput) {
+  private static async processImages(
+    $: CheerioAPI,
+    imgElms: Element[],
+    filePath: string,
+    contents: string,
+    options: CommandArguments,
+    output: PublishOutput,
+  ) {
     const { startFolder, assetLibrary, webUrl, overwriteImages } = options;
-    
-    const imgSources = imgElms.filter(i => !$(i).attr("src").startsWith(`http`)).map(img => $(img).attr('src'));
+
+    const imgSources = imgElms
+      .filter((i) => !$(i).attr("src").startsWith(`http`))
+      .map((img) => $(img).attr("src"));
     const uImgSources = [...new Set(imgSources)];
 
     for (const imgSource of uImgSources) {
-      Logger.debug(`Adding image: ${imgSource} - ${imgSources.length}`)
+      Logger.debug(`Adding image: ${imgSource} - ${imgSources.length}`);
 
-      const imgDirectory = path.join(path.dirname(filePath), path.dirname(imgSource));
-      const imgPath = path.join(path.dirname(filePath), imgSource);
+      const imgDirectory = join(dirname(filePath), dirname(imgSource));
+      const imgPath = join(dirname(filePath), imgSource);
 
-      const uniStartPath = startFolder.replace(/\\/g, '/');
-      const folders = imgDirectory.replace(/\\/g, '/').replace(uniStartPath, '').split('/');
+      const uniStartPath = startFolder.replace(/\\/g, "/");
+      const folders = imgDirectory
+        .replace(/\\/g, "/")
+        .replace(uniStartPath, "")
+        .split("/");
       let crntFolder = assetLibrary;
 
       // Start folder creation process
       crntFolder = await FolderHelpers.create(crntFolder, folders, webUrl);
 
       try {
-        const imgUrl = await FileHelpers.create(crntFolder, imgPath, webUrl, overwriteImages);
-        contents = contents.replace(new RegExp(imgSource, 'g'), imgUrl);
+        const imgUrl = await FileHelpers.create(
+          crntFolder,
+          imgPath,
+          webUrl,
+          overwriteImages,
+        );
+        contents = contents.replace(new RegExp(imgSource, "g"), imgUrl);
         StatusHelper.addImage();
       } catch (e) {
-        return Promise.reject(new Error(`Something failed while uploading the image asset. ${(e as Error).message}`));
+        return Promise.reject(
+          new Error(
+            `Something failed while uploading the image asset. ${e.message}`,
+          ),
+        );
       }
     }
 
@@ -218,43 +386,53 @@ export class DoctorTranspiler {
 
   /**
    * Process the links referenced in the markdown files
-   * @param $ 
-   * @param linkElms 
-   * @param filePath 
-   * @param content 
-   * @param options 
+   * @param $
+   * @param linkElms
+   * @param filePath
+   * @param content
+   * @param options
    */
-  private static processLinks($: cheerio.Root, linkElms: cheerio.Element[], filePath: string, content: string, options: CommandArguments) {
+  private static async processLinks(
+    $: CheerioAPI,
+    linkElms: Element[],
+    filePath: string,
+    content: string,
+    options: CommandArguments,
+  ): Promise<string> {
     const { webUrl, startFolder } = options;
 
-    const fLinks = linkElms.filter(i => !$(i).attr("href").startsWith(`http`));
+    const fLinks = linkElms.filter(
+      (i) => !$(i).attr("href").startsWith(`http`),
+    );
     const uLinks = [...new Set(fLinks)];
 
     for (const link of uLinks) {
       const $link = $(link);
-      const fileLink = $link.attr('href');
+      const fileLink = $link.attr("href");
       let mdFile = "";
 
       Logger.debug(`Processing link: ${fileLink} for ${filePath}`);
 
       if (fileLink.endsWith(`.md`)) {
-        mdFile = $link.attr('href');
+        mdFile = $link.attr("href");
       } else if (fileLink === ".") {
-        mdFile = path.basename(filePath);
+        mdFile = basename(filePath);
       } else {
-        mdFile = `${$link.attr('href')}.md`;
+        mdFile = `${$link.attr("href")}.md`;
       }
 
-      const mdFilePath = path.join(path.dirname(filePath), mdFile);
+      const mdFilePath = join(dirname(filePath), mdFile);
 
       Logger.debug(`File path for link: ${mdFilePath}`);
 
-      if (fs.existsSync(mdFilePath)) {
+      if (await existsAsync(mdFilePath)) {
         // Get the contents of the file
-        const mdContents = fs.readFileSync(mdFilePath, { encoding: 'utf-8' });
+        const mdContents = await readFileAsync(mdFilePath, {
+          encoding: "utf-8",
+        });
         if (!mdContents) {
           return;
-        } 
+        }
 
         // Get the slug
         const mdData = matter(mdContents);
@@ -262,8 +440,14 @@ export class DoctorTranspiler {
           return;
         }
 
-        const slug = FrontMatterHelper.getSlug(mdData.data as PageFrontMatter, startFolder, mdFilePath);
-        const spUrl = `${webUrl}${webUrl.endsWith('/') ? '' : '/'}sitepages/${slug}`;
+        const slug = FrontMatterHelper.getSlug(
+          mdData.data as PageFrontMatter,
+          startFolder,
+          mdFilePath,
+        );
+        const spUrl = `${webUrl}${
+          webUrl.endsWith("/") ? "" : "/"
+        }sitepages/${slug}`;
         Logger.debug(`Referenced file slug: ${spUrl}`);
 
         // Update the link in the markdown

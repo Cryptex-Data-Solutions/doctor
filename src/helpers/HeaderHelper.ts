@@ -1,95 +1,125 @@
-import { CommandArguments } from '../models/CommandArguments';
-import { HeaderOptions } from './../models/HeaderOptions';
-import { ArgumentsHelper } from './ArgumentsHelper';
-import { execScript } from './execScript';
-import * as path from 'path';
-import { FolderHelpers } from './FolderHelpers';
-import { FileHelpers } from './FileHelpers';
-import { CliCommand, Logger } from '.';
-
+import { join, dirname, basename } from "path";
+import { CommandArguments, HeaderOptions } from "@models";
+import {
+  CliCommand,
+  executeWithRetry,
+  FileHelpers,
+  FolderHelpers,
+  Logger,
+} from "@helpers";
 
 export class HeaderHelper {
-
   /**
    * Set the page header based on the settings in the page's front matter
-   * @param filePath 
-   * @param webUrl 
-   * @param slug 
-   * @param header 
-   * @param options 
+   * @param filePath
+   * @param webUrl
+   * @param slug
+   * @param header
+   * @param options
    */
-  public static async set(filePath: string, webUrl: string, slug: string, header: HeaderOptions, options: CommandArguments, isCopy: boolean = false) {
+  public static async set(
+    filePath: string,
+    webUrl: string,
+    slug: string,
+    header: HeaderOptions,
+    options: CommandArguments,
+    isCopy: boolean = false
+  ) {
     const { assetLibrary, startFolder, overwriteImages } = options;
 
     Logger.debug(`Setting the page header for ${slug}`);
 
-    let setPageHeader = `spo page header set --webUrl "${webUrl}" --pageName "${slug}"`;
-    const headerLength = setPageHeader.length;
-    
+    const headerOptions: any = {
+      webUrl,
+      pageName: slug,
+    };
+    let hasHeaderUpdates = false;
+
     if (header) {
       if (header.type) {
-        setPageHeader = `${setPageHeader} --type "${header.type}"`;
+        headerOptions.type = header.type;
+        hasHeaderUpdates = true;
       }
 
       if (header.image) {
-        const imgDirectory = path.join(path.dirname(filePath), path.dirname(header.image));
-        const imgPath = path.join(path.dirname(filePath), header.image);
+        const imgDirectory = join(dirname(filePath), dirname(header.image));
+        const imgPath = join(dirname(filePath), header.image);
 
-        const uniStartPath = startFolder.replace(/\\/g, '/');
-        const folders = imgDirectory.replace(/\\/g, '/').replace(uniStartPath, '').split('/');
+        const uniStartPath = startFolder.replace(/\\/g, "/");
+        const folders = imgDirectory
+          .replace(/\\/g, "/")
+          .replace(uniStartPath, "")
+          .split("/");
         let crntFolder = assetLibrary;
 
         // Start folder creation process
         crntFolder = await FolderHelpers.create(crntFolder, folders, webUrl);
         await FileHelpers.create(crntFolder, imgPath, webUrl, overwriteImages);
 
-        const imgUrl = FileHelpers.getRelUrl(webUrl, `${crntFolder}/${path.basename(header.image)}`);
-        setPageHeader = `${setPageHeader} --imageUrl "${imgUrl}"`;
+        const imgUrl = FileHelpers.getRelUrl(
+          webUrl,
+          `${crntFolder}/${basename(header.image)}`
+        );
+        headerOptions.imageUrl = imgUrl;
+        hasHeaderUpdates = true;
 
         if (header.altText) {
-          setPageHeader = `${setPageHeader} --altText "${header.altText}"`;
+          headerOptions.altText = header.altText;
+          hasHeaderUpdates = true;
         }
 
         if (typeof header.translateX !== "undefined") {
-          setPageHeader = `${setPageHeader} --translateX "${header.translateX}"`;
+          headerOptions.translateX = header.translateX;
+          hasHeaderUpdates = true;
         }
-        
+
         if (typeof header.translateY !== "undefined") {
-          setPageHeader = `${setPageHeader} --translateY "${header.translateY}"`;
+          headerOptions.translateY = header.translateY;
+          hasHeaderUpdates = true;
         }
       }
-      
+
       if (header.layout) {
-        setPageHeader = `${setPageHeader} --layout "${header.layout}"`;
+        headerOptions.layout = header.layout;
+        hasHeaderUpdates = true;
       }
 
       if (header.textAlignment) {
-        setPageHeader = `${setPageHeader} --textAlignment "${header.textAlignment}"`;
+        headerOptions.textAlignment = header.textAlignment;
+        hasHeaderUpdates = true;
       }
-      
-      if (typeof header.showTopicHeader !== "undefined") {
-        setPageHeader = `${setPageHeader} --showTopicHeader "${header.showTopicHeader}"`;
+
+      if (header.showTopicHeader) {
+        headerOptions.showTopicHeader = true;
+        hasHeaderUpdates = true;
       }
 
       if (header.topicHeader) {
-        setPageHeader = `${setPageHeader} --topicHeader "${header.topicHeader}"`;
+        headerOptions.topicHeader = header.topicHeader;
+        hasHeaderUpdates = true;
       }
 
-      if (typeof header.showPublishDate !== "undefined") {
-        setPageHeader = `${setPageHeader} --showPublishDate "${header.showPublishDate}"`;
+      if (header.showPublishDate) {
+        headerOptions.showPublishDate = true;
+        hasHeaderUpdates = true;
       }
-      
+
       if (header.authors) {
-        setPageHeader = `${setPageHeader} --authors "${header.authors.join(",")}"`;
+        headerOptions.authors = header.authors.join(",");
+        hasHeaderUpdates = true;
       }
     }
-    
-    if (header || !header && !isCopy) {
+
+    if (header || (!header && !isCopy)) {
       // Check if header is changed
-      if (headerLength === setPageHeader.length) {
+      if (!hasHeaderUpdates) {
         return;
       }
-      await execScript(ArgumentsHelper.parse(`${setPageHeader}`), CliCommand.getRetry());
+      await executeWithRetry(
+        "spo page header set",
+        headerOptions,
+        CliCommand.getRetry()
+      );
     }
   }
 }

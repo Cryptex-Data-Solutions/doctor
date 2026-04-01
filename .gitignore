@@ -5,18 +5,23 @@ todo.md
 .DS_Store
 screenshots
 mochawesome-report
-.vscode/
 
+# IDE / editor
+.idea/
+
+# Local project files
+CLAUDE.md
+MODERNIZATION.md
+UPSTREAM_BUGS.md
+cypress.env.json
+
+# Certificates and secrets
 *.pem
 *.pfx
+*.pfx.b64
 *.crt
 *.key
-*.b64
-cypress.json
-cypress.env.json
-test-sample/
+
+# Test artifacts
 doctor-sample/
-cypress/screenshots
-cypress/videos
-cypress/results
-cypress/reports
+test-sample/

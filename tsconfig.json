@@ -3,8 +3,10 @@
     "baseUrl": ".",
     "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "sourceMap": true,
     "experimentalDecorators": true,
@@ -15,11 +17,25 @@
     "noUnusedLocals": true,
     "lib": [
       "DOM",
-      "ES2022"
-    ]
+      "ES2015"
+    ],
+    "paths": {
+      "@commands": [
+        "src/commands/index.ts"
+      ],
+      "@helpers": [
+        "src/helpers/index.ts"
+      ],
+      "@models": [
+        "src/models/index.ts"
+      ],
+      "@utils": [
+        "src/utils/index.ts"
+      ]
+    }
   },
   "include": [
-    "src/**/*.ts"   
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules"

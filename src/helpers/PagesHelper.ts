@@ -1,30 +1,55 @@
 import { Observable } from "rxjs";
-import { Page, PageTemplate, File, MarkdownSettings, CommandArguments } from "src/models";
-import { ArgumentsHelper, CliCommand, execScript, FileHelpers, FolderHelpers, ListHelpers, Logger, MarkdownHelper } from ".";
-
+import {
+  Page,
+  PageTemplate,
+  File,
+  MarkdownSettings,
+  CommandArguments,
+} from "@models";
+import {
+  CliCommand,
+  executeWithRetry,
+  FileHelpers,
+  FolderHelpers,
+  ListHelpers,
+  Logger,
+  MarkdownHelper,
+} from "@helpers";
+import { executeCommand } from "@pnp/cli-microsoft365";
+import { basename, dirname } from "path";
 
 export class PagesHelper {
   private static pages: File[] = [];
   private static processedPages: { [slug: string]: number } = {};
+  private static listFieldMap: { [listId: string]: Map<string, string> } = {};
 
   /**
    * Retrieve all the pages from the current site
-   * @param webUrl 
+   * @param webUrl
    */
   public static async getAllPages(webUrl: string): Promise<void> {
-    PagesHelper.pages = await FileHelpers.getAllPages(webUrl, 'sitepages');
+    Logger.debug(`Retrieving all the existing pages from the site: ${webUrl}`);
+
+    PagesHelper.pages = await FileHelpers.getAllPages(webUrl, "sitepages");
     Logger.debug(`Existing pages`);
     Logger.debug(PagesHelper.pages);
   }
 
   /**
    * Cleaning up all the untouched pages
-   * @param webUrl 
+   * @param webUrl
    */
-  public static async clean(webUrl: string, options: CommandArguments): Promise<Observable<string>> {
-    return new Observable(observer => {
+  public static async clean(
+    webUrl: string,
+    options: CommandArguments
+  ): Promise<Observable<string>> {
+    return new Observable((observer) => {
       (async () => {
-        const untouched = this.getUntouchedPages().filter(slug => !slug.toLowerCase().startsWith('templates') && slug.endsWith('.aspx'));
+        const untouched = this.getUntouchedPages().filter(
+          (slug) =>
+            !slug.toLowerCase().startsWith("templates") &&
+            slug.endsWith(".aspx")
+        );
         Logger.debug(`Removing the following files`);
         Logger.debug(untouched);
         for (const slug of untouched) {
@@ -34,7 +59,15 @@ export class PagesHelper {
               observer.next(`Cleaning up page: ${slug}`);
               const filePath = `sitepages/${slug}`;
               const relUrl = FileHelpers.getRelUrl(webUrl, filePath);
-              await execScript<string>(ArgumentsHelper.parse(`spo file remove --webUrl "${webUrl}" --url "${relUrl}" --force`), CliCommand.getRetry());
+              await executeWithRetry(
+                "spo file remove",
+                {
+                  webUrl,
+                  url: relUrl,
+                  force: true,
+                },
+                CliCommand.getRetry()
+              );
             }
           } catch (e) {
             observer.error(e);
@@ -49,203 +82,566 @@ export class PagesHelper {
       })();
     });
   }
-  
+
   /**
    * Check if the page exists, and if it doesn't it will be created
-   * @param webUrl 
-   * @param slug 
-   * @param title 
+   * @param webUrl
+   * @param slug
+   * @param title
    */
-  public static async createPageIfNotExists(webUrl: string, slug: string, title: string, layout: string = "Article", commentsDisabled: boolean = false, description: string = "", template: string | null = null, skipExistingPages: boolean = false): Promise<boolean> {
+  public static async createPageIfNotExists(
+    webUrl: string,
+    slug: string,
+    title: string,
+    layout: string = "Article",
+    commentsDisabled: boolean = false,
+    description: string = "",
+    template: string | null = null,
+    skipExistingPages: boolean = false
+  ): Promise<boolean> {
     try {
       const relativeUrl = FileHelpers.getRelUrl(webUrl, `sitepages/${slug}`);
 
       if (skipExistingPages) {
         if (PagesHelper.pages && PagesHelper.pages.length > 0) {
-          const page = PagesHelper.pages.find((page: File) => page.FileRef.toLowerCase() === relativeUrl.toLowerCase());
+          const page = PagesHelper.pages.find(
+            (page: File) =>
+              page.FileRef.toLowerCase() === relativeUrl.toLowerCase()
+          );
           if (page) {
             // Page already existed
             PagesHelper.processedPages[slug] = page.ID;
-            Logger.debug(`Processed pages: ${JSON.stringify(PagesHelper.processedPages)}`);
+            Logger.debug(
+              `Processed pages: ${JSON.stringify(PagesHelper.processedPages)}`
+            );
             return true;
           }
         }
       }
-      
-      let pageData: Page | string = await execScript(ArgumentsHelper.parse(`spo page get --webUrl "${webUrl}" --name "${slug}" --metadataOnly --output json`), false);
-      if (pageData && typeof pageData === "string") {
-        pageData = JSON.parse(pageData);
-      }
 
-      PagesHelper.processedPages[slug] = (pageData as Page).ListItemAllFields.Id;
-      Logger.debug(`Processed pages: ${JSON.stringify(PagesHelper.processedPages)}`);
+      const { stdout: pageDataOutput } = await executeCommand("spo page get", {
+        webUrl,
+        name: slug,
+        metadataOnly: true,
+        output: "json",
+      });
+      let pageData: Page = JSON.parse(pageDataOutput);
+
+      PagesHelper.processedPages[slug] = (
+        pageData as Page
+      ).ListItemAllFields.Id;
+      Logger.debug(
+        `Processed pages: ${JSON.stringify(PagesHelper.processedPages)}`
+      );
 
       Logger.debug(pageData);
 
-      let cmdArgs = ``;
+      const setOptions: any = {
+        webUrl,
+        name: slug,
+      };
 
       if (pageData && (pageData as Page).title !== title) {
-        cmdArgs = `--title "${title}"`;
+        setOptions.title = title;
       }
 
       if (pageData && description) {
-        cmdArgs = `${cmdArgs} --description "${description}"`;
+        setOptions.description = description;
       }
 
       if (pageData && (pageData as Page).layoutType !== layout) {
-        cmdArgs = `${cmdArgs} --layoutType "${layout}"`;
+        setOptions.layoutType = layout;
       }
 
-      if (pageData && (pageData as Page).commentsDisabled !== commentsDisabled) {
-        cmdArgs = `${cmdArgs} --commentsEnabled ${commentsDisabled ? "false" : "true" }`;
+      if (
+        pageData &&
+        (pageData as Page).commentsDisabled !== commentsDisabled
+      ) {
+        setOptions.commentsEnabled = !commentsDisabled;
       }
 
-      if (cmdArgs) {
-        await execScript(ArgumentsHelper.parse(`spo page set --webUrl "${webUrl}" --name "${slug}" ${cmdArgs}`), CliCommand.getRetry());
+      if (Object.keys(setOptions).length > 2) {
+        await executeWithRetry(
+          "spo page set",
+          setOptions,
+          CliCommand.getRetry()
+        );
       }
 
       return true;
     } catch (e) {
       // Check if folders for the file need to be created
-      if (slug.split('/').length > 1) {
-        const folders = slug.split('/');
-        await FolderHelpers.create('sitepages', folders.slice(0, folders.length - 1), webUrl);
+      if (slug.split("/").length > 1) {
+        const folders = slug.split("/");
+        await FolderHelpers.create(
+          "sitepages",
+          folders.slice(0, folders.length - 1),
+          webUrl
+        );
       }
 
       if (template) {
-        let templates: PageTemplate[] | string = await execScript(ArgumentsHelper.parse(`spo page template list --webUrl "${webUrl}" --output json`), CliCommand.getRetry());
-        if (templates && typeof templates === "string") {
-          templates = JSON.parse(templates);
-        }
-        
+        const { stdout: templatesOutput } = await executeWithRetry(
+          "spo page template list",
+          {
+            webUrl,
+            output: "json",
+          },
+          CliCommand.getRetry()
+        );
+        let templates: PageTemplate[] = JSON.parse(templatesOutput || "[]");
+
         Logger.debug(templates);
 
-        const pageTemplate = (templates as PageTemplate[]).find(t => t.Title === template);
+        const pageTemplate = (templates as PageTemplate[]).find(
+          (t) => t.Title === template
+        );
         if (pageTemplate) {
-          const templateUrl = pageTemplate.Url.toLowerCase().replace("sitepages/", "");
-          await execScript(ArgumentsHelper.parse(`spo page copy --webUrl "${webUrl}" --sourceName "${templateUrl}" --targetUrl "${slug}"`), CliCommand.getRetry());
-          await execScript(ArgumentsHelper.parse(`spo page set --webUrl "${webUrl}" --name "${slug}" --publish`), CliCommand.getRetry());
-          return await this.createPageIfNotExists(webUrl, slug, title, layout, commentsDisabled, description, null, skipExistingPages);
+          const templateUrl = pageTemplate.Url.toLowerCase().replace(
+            "sitepages/",
+            ""
+          );
+          await executeWithRetry(
+            "spo page copy",
+            {
+              webUrl,
+              sourceName: templateUrl,
+              targetUrl: slug,
+            },
+            CliCommand.getRetry()
+          );
+          await executeWithRetry(
+            "spo page set",
+            {
+              webUrl,
+              name: slug,
+              publish: true,
+            },
+            CliCommand.getRetry()
+          );
+          return await this.createPageIfNotExists(
+            webUrl,
+            slug,
+            title,
+            layout,
+            commentsDisabled,
+            description,
+            null,
+            skipExistingPages
+          );
         } else {
-          console.log(`Template "${template}" not found on the site, will create a default page instead.`)
+          console.log(
+            `Template "${template}" not found on the site, will create a default page instead.`
+          );
         }
       }
 
       // File doesn't exist
-      await execScript(ArgumentsHelper.parse(`spo page add --webUrl "${webUrl}" --name "${slug}" --title "${title}" --layoutType "${layout}" ${commentsDisabled ? "" : "--commentsEnabled"} --description "${description}"`), CliCommand.getRetry());
+      const pageName = basename(slug);
+      try {
+        await executeWithRetry(
+          "spo page add",
+          {
+            webUrl,
+            name: pageName,
+            title,
+            layoutType: layout,
+            commentsEnabled: !commentsDisabled,
+            description,
+          },
+          CliCommand.getRetry()
+        );
+      } catch (e: any) {
+        if (!this.isAlreadyExistsError(e)) {
+          throw e;
+        }
+
+        Logger.debug(
+          `Page ${pageName} already exists at Site Pages root. Continuing with move/update flow.`
+        );
+      }
+
+      if (slug !== pageName) {
+        const targetFolder = dirname(slug).replace(/\\/g, "/");
+        const pageList = await ListHelpers.getSitePagesList(webUrl);
+        const sitePagesRoot =
+          pageList?.RootFolder?.ServerRelativeUrl ||
+          FileHelpers.getRelUrl(webUrl, "sitepages");
+
+        await this.ensureFolderPath(webUrl, sitePagesRoot, targetFolder);
+
+        const sourceUrl = `${sitePagesRoot}/${pageName}`;
+        const targetUrl = `${sitePagesRoot}/${targetFolder}`;
+
+        Logger.debug(
+          `Moving page from ${sourceUrl} to ${targetUrl} with name ${pageName}`
+        );
+
+        await executeWithRetry(
+          "spo file move",
+          {
+            webUrl,
+            sourceUrl,
+            targetUrl,
+            newName: pageName,
+            nameConflictBehavior: "replace",
+          },
+          CliCommand.getRetry()
+        );
+      }
 
       return false;
     }
   }
 
+  private static async ensureFolderPath(
+    webUrl: string,
+    rootFolder: string,
+    relativePath: string
+  ): Promise<void> {
+    const segments = (relativePath || "").split("/").filter(Boolean);
+    if (segments.length === 0) {
+      return;
+    }
+
+    let currentFolder = rootFolder;
+
+    for (const segment of segments) {
+      try {
+        await executeWithRetry(
+          "spo folder add",
+          {
+            webUrl,
+            parentFolderUrl: currentFolder,
+            name: segment,
+          },
+          CliCommand.getRetry()
+        );
+      } catch (e: any) {
+        if (!this.isAlreadyExistsError(e)) {
+          throw e;
+        }
+      }
+
+      currentFolder = `${currentFolder}/${segment}`;
+    }
+  }
+
+  private static isAlreadyExistsError(error: any): boolean {
+    const message =
+      typeof error === "string"
+        ? error
+        : error?.message || JSON.stringify(error);
+    const normalized = (message || "").toLowerCase();
+
+    return (
+      normalized.includes("already exists") ||
+      normalized.includes("file exists") ||
+      normalized.includes("folder exists")
+    );
+  }
+
   /**
    * Retrieve all the page controls
-   * @param webUrl 
-   * @param slug 
+   * @param webUrl
+   * @param slug
    */
-  public static async getPageControls(webUrl: string, slug: string): Promise<string> {
+  public static async getPageControls(
+    webUrl: string,
+    slug: string
+  ): Promise<string> {
     Logger.debug(`Get page controls for ${slug}`);
 
-    let output = await execScript<any | string>(ArgumentsHelper.parse(`spo page get --webUrl "${webUrl}" --name "${slug}" --output json`), CliCommand.getRetry());
-    if (output && typeof output === "string") {
-      output = JSON.parse(output);
-    }
-    
+    const { stdout } = await executeWithRetry(
+      "spo page get",
+      {
+        webUrl,
+        name: slug,
+        output: "json",
+      },
+      CliCommand.getRetry()
+    );
+    const output = JSON.parse(stdout || "{}");
+
     Logger.debug(JSON.stringify(output.canvasContentJson || "[]"));
     return output.canvasContentJson || "[]";
   }
 
-
   /**
    * Inserts or create the control
-   * @param webPartTitle 
-   * @param markdown 
+   * @param webPartTitle
+   * @param markdown
    */
-  public static async insertOrCreateControl(webPartTitle: string, markdown: string, slug: string, webUrl: string, wpId: string = null, mdOptions: MarkdownSettings | null, wasAlreadyParsed: boolean = false) {
-    Logger.debug(`Insert the markdown webpart for the page ${slug} - Control ID: ${wpId} - Was already parsed: ${wasAlreadyParsed}`);
+  public static async insertOrCreateControl(
+    webPartTitle: string,
+    markdown: string,
+    slug: string,
+    webUrl: string,
+    options: CommandArguments,
+    wpId: string = null,
+    mdOptions: MarkdownSettings | null,
+    wasAlreadyParsed: boolean = false
+  ) {
+    Logger.debug(
+      `Insert the markdown webpart for the page ${slug} - Control ID: ${wpId} - Was already parsed: ${wasAlreadyParsed}`
+    );
 
-    const wpData = await MarkdownHelper.getJsonData(webPartTitle, markdown, mdOptions, wasAlreadyParsed);
-    
+    const wpData = await MarkdownHelper.getJsonData(
+      webPartTitle,
+      markdown,
+      mdOptions,
+      options,
+      wasAlreadyParsed
+    );
+
     if (wpId) {
       // Web part needs to be updated
-      await execScript(ArgumentsHelper.parse(`spo page control set --webUrl "${webUrl}" --pageName "${slug}" --id "${wpId}" --webPartData @${wpData}`), CliCommand.getRetry());
+      await executeWithRetry(
+        "spo page control set",
+        {
+          webUrl,
+          pageName: slug,
+          id: wpId,
+          webPartData: `@${wpData}`,
+        },
+        CliCommand.getRetry()
+      );
     } else {
-      // Ensure a section exists before adding the web part (required by CLI v11+)
-      await execScript(ArgumentsHelper.parse(`spo page section add --webUrl "${webUrl}" --pageName "${slug}" --sectionTemplate OneColumn`), CliCommand.getRetry());
-      // Add new markdown web part to the newly created section
-      await execScript(ArgumentsHelper.parse(`spo page clientsidewebpart add --webUrl "${webUrl}" --pageName "${slug}" --webPartId 1ef5ed11-ce7b-44be-bc5e-4abd55101d16 --webPartData @${wpData} --section 1 --column 1`), CliCommand.getRetry());
+      // Add new markdown web part
+      const addOptions = {
+        webUrl,
+        pageName: slug,
+        webPartId: "1ef5ed11-ce7b-44be-bc5e-4abd55101d16",
+        webPartData: `@${wpData}`,
+        section: 1,
+        column: 1,
+      };
+
+      try {
+        await executeWithRetry(
+          "spo page clientsidewebpart add",
+          addOptions,
+          CliCommand.getRetry()
+        );
+      } catch (e: any) {
+        if (!this.isInvalidPlacementError(e)) {
+          throw e;
+        }
+
+        Logger.debug(
+          `Page ${slug} has no compatible section yet. Creating a OneColumn section and retrying web part add.`
+        );
+
+        await executeWithRetry(
+          "spo page section add",
+          {
+            webUrl,
+            pageName: slug,
+            sectionTemplate: "OneColumn",
+          },
+          CliCommand.getRetry()
+        );
+
+        await executeWithRetry(
+          "spo page clientsidewebpart add",
+          addOptions,
+          CliCommand.getRetry()
+        );
+      }
     }
   }
 
+  private static isInvalidPlacementError(error: any): boolean {
+    const message =
+      typeof error === "string"
+        ? error
+        : error?.message || JSON.stringify(error);
+    const normalized = (message || "").toLowerCase();
+
+    return (
+      normalized.includes("invalid section") ||
+      normalized.includes("invalid column")
+    );
+  }
 
   /**
    * Set the page its metadata
-   * @param webUrl 
+   * @param webUrl
    * @param slug
-   * @param metadata 
+   * @param metadata
    */
-  public static async setPageMetadata(webUrl: string, slug: string, metadata: { [fieldName: string]: any } = null) {
+  public static async setPageMetadata(
+    webUrl: string,
+    slug: string,
+    metadata: { [fieldName: string]: any } = null
+  ) {
     const pageId = await this.getPageId(webUrl, slug);
     const pageList = await ListHelpers.getSitePagesList(webUrl);
-    if (pageId && pageList) {
-      let metadataCommand: string = `spo listitem set --listId "${pageList.Id}" --id ${pageId} --webUrl "${webUrl}"`;
+    if (pageId && pageList && metadata && Object.keys(metadata).length > 0) {
+      const validatedMetadata = await this.getValidatedMetadata(
+        webUrl,
+        pageList,
+        metadata
+      );
 
-      if (metadata) {
-        for (const fieldName in metadata) {
-          metadataCommand = `${metadataCommand} --${fieldName} "${metadata[fieldName]}"`
+      if (Object.keys(validatedMetadata).length === 0) {
+        Logger.debug(
+          `Skipping metadata update for ${slug} because none of the provided fields exist on Site Pages.`
+        );
+        return;
+      }
+
+      await executeWithRetry(
+        "spo listitem set",
+        {
+          listId: pageList.Id,
+          id: pageId,
+          webUrl,
+          ...validatedMetadata,
+        },
+        CliCommand.getRetry()
+      );
+    }
+  }
+
+  private static async getValidatedMetadata(
+    webUrl: string,
+    pageList: any,
+    metadata: { [fieldName: string]: any }
+  ): Promise<{ [fieldName: string]: any }> {
+    const listId = pageList?.Id;
+    let fieldMap = this.listFieldMap[listId];
+
+    if (!fieldMap) {
+      const { stdout } = await executeWithRetry(
+        "spo field list",
+        {
+          webUrl,
+          ...(pageList?.RootFolder?.ServerRelativeUrl
+            ? { listUrl: pageList.RootFolder.ServerRelativeUrl }
+            : { listTitle: pageList?.Title }),
+          output: "json",
+        },
+        CliCommand.getRetry()
+      );
+
+      const fields = JSON.parse(stdout || "[]") as any[];
+      fieldMap = new Map<string, string>();
+
+      for (const field of fields) {
+        if (field?.InternalName) {
+          fieldMap.set(field.InternalName.toLowerCase(), field.InternalName);
+        }
+
+        if (field?.StaticName) {
+          fieldMap.set(field.StaticName.toLowerCase(), field.InternalName || field.StaticName);
+        }
+
+        if (field?.Title) {
+          fieldMap.set(field.Title.toLowerCase(), field.InternalName || field.Title);
         }
       }
 
-      await execScript(ArgumentsHelper.parse(metadataCommand), CliCommand.getRetry());
+      this.listFieldMap[listId] = fieldMap;
     }
-  }
 
+    const validated: { [fieldName: string]: any } = {};
+
+    for (const [key, value] of Object.entries(metadata)) {
+      const internalName = fieldMap.get(key.toLowerCase());
+
+      if (!internalName) {
+        Logger.debug(
+          `Skipping metadata field '${key}' because it does not exist on list '${listId}'.`
+        );
+        continue;
+      }
+
+      validated[internalName] = value;
+    }
+
+    return validated;
+  }
 
   /**
    * Set the page its description
-   * @param webUrl 
-   * @param slug 
-   * @param description 
+   * @param webUrl
+   * @param slug
+   * @param description
    */
-  public static async setPageDescription(webUrl: string, slug: string, description: string) {
+  public static async setPageDescription(
+    webUrl: string,
+    slug: string,
+    description: string
+  ) {
     const pageId = await this.getPageId(webUrl, slug);
     const pageList = await ListHelpers.getSitePagesList(webUrl);
     if (pageId && pageList) {
-      await execScript(ArgumentsHelper.parse(`spo listitem set --listId "${pageList.Id}" --id ${pageId} --webUrl "${webUrl}" --Description "${description}" --systemUpdate`), CliCommand.getRetry());
+      await executeWithRetry(
+        "spo listitem set",
+        {
+          listId: pageList.Id,
+          id: pageId,
+          webUrl,
+          Description: description,
+          systemUpdate: true,
+        },
+        CliCommand.getRetry()
+      );
     }
   }
 
-
   /**
    * Publish the page
-   * @param webUrl 
-   * @param slug 
+   * @param webUrl
+   * @param slug
    */
   public static async publishPageIfNeeded(webUrl: string, slug: string) {
     const relativeUrl = FileHelpers.getRelUrl(webUrl, `sitepages/${slug}`);
     try {
-      await execScript(ArgumentsHelper.parse(`spo file checkin --webUrl "${webUrl}" --fileUrl "${relativeUrl}"`), false);
+          await executeCommand("spo file checkin", {
+            webUrl,
+            url: relativeUrl,
+          });
     } catch (e) {
       // Might be that the file doesn't need to be checked in
     }
-    await execScript(ArgumentsHelper.parse(`spo page set --name "${slug}" --webUrl "${webUrl}" --publish`), CliCommand.getRetry());
+    await executeWithRetry(
+      "spo page set",
+      {
+        name: slug,
+        webUrl,
+        publish: true,
+      },
+      CliCommand.getRetry()
+    );
   }
 
   /**
    * Retrieve the page id
-   * @param webUrl 
-   * @param slug 
+   * @param webUrl
+   * @param slug
    */
   private static async getPageId(webUrl: string, slug: string) {
     if (!PagesHelper.processedPages[slug.toLowerCase()]) {
-      let pageData: any = await execScript(ArgumentsHelper.parse(`spo page get --webUrl "${webUrl}" --name "${slug}" --metadataOnly --output json`), CliCommand.getRetry());
-      if (pageData && typeof pageData === "string") {
-        pageData = JSON.parse(pageData);
+      const { stdout } = await executeWithRetry(
+        "spo page get",
+        {
+          webUrl,
+          name: slug,
+          metadataOnly: true,
+          output: "json",
+        },
+        CliCommand.getRetry()
+      );
+      if (stdout) {
+        const pageData = JSON.parse(stdout);
 
         Logger.debug(pageData);
 
         if (pageData.ListItemAllFields && pageData.ListItemAllFields.Id) {
-          PagesHelper.processedPages[slug.toLowerCase()] = pageData.ListItemAllFields.Id;
+          PagesHelper.processedPages[slug.toLowerCase()] =
+            pageData.ListItemAllFields.Id;
           return PagesHelper.processedPages[slug.toLowerCase()];
         }
 
@@ -263,11 +659,12 @@ export class PagesHelper {
     let untouched: string[] = [];
     for (const page of PagesHelper.pages) {
       const { FileRef: url } = page;
-      const slug = url.toLowerCase().split('/sitepages/')[1];
+      const slug = url.toLowerCase().split("/sitepages/")[1];
       if (!PagesHelper.processedPages[slug]) {
         untouched.push(slug);
       }
     }
     return untouched;
   }
+
 }

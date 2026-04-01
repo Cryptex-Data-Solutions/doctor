@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CLI = path.resolve(__dirname, '../../bin/localm365');
+const CLI = path.resolve(__dirname, '../../node_modules/@pnp/cli-microsoft365/dist/index.js');
 
 function isLoggedIn(): boolean {
   try {
