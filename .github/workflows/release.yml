@@ -26,13 +26,13 @@ jobs:
             siteUrl: SITEURL_MACOS
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: 22
 
     - name: Cache node modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.npm
         key: ${{ matrix.os }}-release-${{ hashFiles('**/package-lock.json') }}
@@ -74,8 +74,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: 22
 
@@ -84,7 +84,7 @@ jobs:
       shell: pwsh
       run: echo "dir=$(npm config get cache)" >> $env:GITHUB_OUTPUT
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ${{ steps.npm-cache.outputs.dir }}
         key: windows-pwsh-release-${{ hashFiles('**/package-lock.json') }}
@@ -131,8 +131,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: 22
 
@@ -142,7 +142,7 @@ jobs:
       run: |
         for /f "tokens=*" %%i in ('npm config get cache') do echo dir=%%i >> %GITHUB_OUTPUT%
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ${{ steps.npm-cache.outputs.dir }}
         key: windows-cmd-release-${{ hashFiles('**/package-lock.json') }}
@@ -204,13 +204,13 @@ jobs:
             siteUrl: SITEURL_WINDOWS
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: 22
 
     - name: Cache node modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.npm
         key: ubuntu-latest-e2e-${{ hashFiles('**/package-lock.json') }}
